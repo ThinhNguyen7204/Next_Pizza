@@ -40,8 +40,8 @@ export default function EditProduct({
   const form = useForm<UpdateProductBodyType>({
     resolver: zodResolver(UpdateProductBody),
     defaultValues: {
-      name: '',
-      menu: '',
+      product_name: '',
+      menu_name: '',
       description: '',
       image: undefined
     },
@@ -78,7 +78,7 @@ export default function EditProduct({
 
           <FieldGroup>
             <Controller
-              name="name"
+              name="product_name"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -99,7 +99,7 @@ export default function EditProduct({
               )}
             />
             <Controller
-              name="menu"
+              name="menu_name"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -130,7 +130,7 @@ export default function EditProduct({
                     />
                     <InputGroupAddon align="block-end">
                       <InputGroupText className="tabular-nums">
-                        {field.value.length}/100 characters
+                        {field.value?.length}/100 characters
                       </InputGroupText>
                     </InputGroupAddon>
                   </InputGroup>

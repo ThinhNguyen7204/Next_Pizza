@@ -36,14 +36,13 @@ export default function AddProducts() {
   const form = useForm<CreateProductBodyType>({
     resolver: zodResolver(CreateProductBody),
     defaultValues: {
-      name: '',
-      menu: '',
+      product_name: '',
+      menu_name: '',
       description: '',
       image: undefined
     },
     mode: "onChange",
   })
-  console.log(form.formState.errors)
   function onSubmit(data: CreateProductBodyType) {
     setOpen(false)
     console.log(form.formState.errors)
@@ -72,7 +71,7 @@ export default function AddProducts() {
 
           <FieldGroup>
             <Controller
-              name="name"
+              name="product_name"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -93,7 +92,7 @@ export default function AddProducts() {
               )}
             />
             <Controller
-              name="menu"
+              name="menu_name"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -124,7 +123,7 @@ export default function AddProducts() {
                     />
                     <InputGroupAddon align="block-end">
                       <InputGroupText className="tabular-nums">
-                        {field.value.length}/100 characters
+                        {field.value?.length}/100 characters
                       </InputGroupText>
                     </InputGroupAddon>
                   </InputGroup>

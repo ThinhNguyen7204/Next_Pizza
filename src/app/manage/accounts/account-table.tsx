@@ -176,7 +176,7 @@ function AlertDialogDeleteProduct({
 }
 
 const PAGE_SIZE = 2
-export default function ProductTable() {
+export default function AccountTable() {
   const searchParam = useSearchParams()
   const page = searchParam.get('page') ? Number(searchParam.get('page')) : 1
   const pageIndex = page - 1
