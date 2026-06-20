@@ -1,8 +1,8 @@
-import z from "zod";
+import z from 'zod'
 
-export const UploadMediaRes = z.object({
+export const UploadImageRes = z.object({
   data: z.string(),
-  message: z.string(),
-});
+  message: z.string()
+})
 
-export type UploadMediaResType = z.TypeOf<typeof UploadMediaRes>;
+export type UploadImageResType = z.TypeOf<typeof UploadImageRes>
