@@ -1,4 +1,4 @@
-import { OrderStatusValues, DeliveryTypeValues } from '~/constants/type'
+import { OrderStatusValues, DeliveryTypeValues } from '@/constants/type'
 import z from 'zod'
 
 export const OrderItemSchema = z.object({

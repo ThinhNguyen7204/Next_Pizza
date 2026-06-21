@@ -8,6 +8,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore, useCartStore } from "@/store"
 import { ShoppingBag, Menu, X, LogOut, User, LayoutDashboard, ChevronDown } from "lucide-react";
 import { useRef, useState } from "react"
+import { useLogoutMutation } from "@/queries/useAuth"
+import { useAppStore } from "@/components/app-provider"
+import { handleErrorApi } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 
 export default function Header() {
@@ -18,6 +23,28 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const logoutMutation = useLogoutMutation()
+  const setRole = useAppStore((state) => state.setRole)
+  const disconnectSocket = useAppStore((state) => state.disconnectSocket)
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    if (logoutMutation.isPending) return
+    try {
+      await logoutMutation.mutateAsync()
+      toast.success('Đăng xuất thành công!')
+      clearAuth()
+      setRole(undefined)
+      disconnectSocket()
+      setUserMenuOpen(false)
+      router.push('/login')
+    } catch (error) {
+      handleErrorApi({
+        error
+      })
+    }
+  }
 
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -69,7 +96,7 @@ export default function Header() {
             )}
           </button>
 
-          {totalItems ? (
+          {isAuthenticated ? (
             <div className="hidden md:block relative" ref={dropdownRef}>
               <button
                 onClick={() => setUserMenuOpen((p) => !p)}
@@ -123,8 +150,9 @@ export default function Header() {
 
                     {/* Logout Section */}
                     <button
-                      // onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-sans text-red-600/80 hover:text-red-500 hover:bg-red-50/80 rounded-lg transition-all duration-200 group"
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-sans text-red-600/80 hover:text-red-500 hover:bg-red-50/80 rounded-lg transition-all duration-200 group disabled:opacity-50"
                     >
                       <LogOut className="w-4.5 h-4.5 opacity-70 group-hover:opacity-100 transition-opacity" />
                       <span className="font-medium">Sign Out</span>

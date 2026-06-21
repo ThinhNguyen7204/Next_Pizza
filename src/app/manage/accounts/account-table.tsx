@@ -1,8 +1,6 @@
 'use client'
 
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
-import { ArrowUpDown } from "lucide-react"
-import { ProductListResType } from "@/schemaValidations/product.schema"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -29,11 +27,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
   AlertDialog,
@@ -45,30 +42,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 import AutoPagination from '@/components/auto-pagination'
 import { useEffect, useState, useMemo, createContext, useContext } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { DataTableColumnHeader } from '@/components/data-table-column-header'
 import { DataTableViewOptions } from '@/components/data-table-view-options'
-import AddProducts from '@/app/manage/products/add-product'
-import EditProduct from '@/app/manage/products/edit-product'
+import AddAccount from '@/app/manage/accounts/add-account'
+import EditAccount from '@/app/manage/accounts/edit-account'
+import { AccountType } from '@/schemaValidations/account.schema'
+import { useGetAccountList, useDeleteAccountMutation } from '@/queries/useAccount'
+import { toast } from 'sonner'
+import { handleErrorApi } from '@/lib/utils'
 
-type ProductItem = ProductListResType['data'][0]
-
-const ProductTableContext = createContext<{
-  setProductIdEdit: (value: number) => void
-  productIdEdit: number | undefined
-  productDelete: ProductItem | null
-  setProductDelete: (value: ProductItem | null) => void
+const AccountTableContext = createContext<{
+  setAccountIdEdit: (value: string | undefined) => void
+  accountIdEdit: string | undefined
+  accountDelete: AccountType | null
+  setAccountDelete: (value: AccountType | null) => void
 }>({
-  setProductIdEdit: (value: number | undefined) => { },
-  productIdEdit: undefined,
-  productDelete: null,
-  setProductDelete: (value: ProductItem | null) => { }
+  setAccountIdEdit: (value: string | undefined) => { },
+  accountIdEdit: undefined,
+  accountDelete: null,
+  setAccountDelete: (value: AccountType | null) => { }
 })
 
-export const columns: ColumnDef<ProductItem>[] = [
+export const columns: ColumnDef<AccountType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -93,34 +93,44 @@ export const columns: ColumnDef<ProductItem>[] = [
   },
   {
     accessorKey: '_id',
-    header: 'ID'
+    header: 'ID',
+    cell: ({ row }) => <span className="font-mono text-xs">{row.original._id}</span>
   },
   {
-    accessorKey: 'product_name',
+    accessorKey: 'avatar',
+    header: 'Avatar',
+    cell: ({ row }) => (
+      <Avatar className="w-8 h-8 rounded-full border border-charcoal/10 object-cover">
+        <AvatarImage src={row.original.avatar || ''} alt={row.original.username} />
+        <AvatarFallback>{row.original.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
+    )
+  },
+  {
+    accessorKey: 'username',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Tên nhân viên" />
     ),
   },
   {
-    accessorKey: 'menu_name',
-    header: 'Menu'
+    accessorKey: 'email',
+    header: 'Email'
   },
   {
-    accessorKey: 'description',
-    header: 'Description'
+    accessorKey: 'role',
+    header: 'Vai trò'
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: function Actions({ row }) {
-      const { setProductIdEdit, setProductDelete } = useContext(ProductTableContext)
-      const openEditProduct = () => {
-        console.log(row.original._id)
-        setProductIdEdit(Number(row.original._id))
+      const { setAccountIdEdit, setAccountDelete } = useContext(AccountTableContext)
+      const openEditAccount = () => {
+        setAccountIdEdit(row.original._id)
       }
 
-      const openDeleteProduct = () => {
-        setProductDelete(row.original)
+      const openDeleteAccount = () => {
+        setAccountDelete(row.original)
       }
       return (
         <DropdownMenu modal={false}>
@@ -133,8 +143,8 @@ export const columns: ColumnDef<ProductItem>[] = [
           <DropdownMenuContent align='end'>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={openEditProduct}>Sửa</DropdownMenuItem>
-            <DropdownMenuItem onClick={openDeleteProduct}>Xóa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openEditAccount}>Sửa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openDeleteAccount}>Xóa</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -142,83 +152,74 @@ export const columns: ColumnDef<ProductItem>[] = [
   },
 ]
 
-function AlertDialogDeleteProduct({
-  productDelete,
-  setProductDelete
+function AlertDialogDeleteAccount({
+  accountDelete,
+  setAccountDelete,
+  onConfirm
 }: {
-  productDelete: ProductItem | null
-  setProductDelete: (value: ProductItem | null) => void
+  accountDelete: AccountType | null
+  setAccountDelete: (value: AccountType | null) => void
+  onConfirm: () => void
 }) {
   return (
     <AlertDialog
-      open={Boolean(productDelete)}
+      open={Boolean(accountDelete)}
       onOpenChange={(value) => {
         if (!value) {
-          setProductDelete(null)
+          setAccountDelete(null)
         }
       }}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa món ăn?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa nhân viên?</AlertDialogTitle>
           <AlertDialogDescription>
-            Món <span className='bg-foreground text-primary-foreground rounded px-1'>{productDelete?.product_name}</span> sẽ bị xóa
-            vĩnh viễn
+            Tài khoản nhân viên <span className='bg-foreground text-primary-foreground rounded px-1'>{accountDelete?.username}</span> sẽ bị xóa
+            vĩnh viễn.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Tiếp tục</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   )
 }
 
-const PAGE_SIZE = 2
+const PAGE_SIZE = 10
 export default function AccountTable() {
   const searchParam = useSearchParams()
   const page = searchParam.get('page') ? Number(searchParam.get('page')) : 1
   const pageIndex = page - 1
-  const [productIdEdit, setProductIdEdit] = useState<number | undefined>()
-  const [productDelete, setProductDelete] = useState<ProductItem | null>(null)
+  const [accountIdEdit, setAccountIdEdit] = useState<string | undefined>()
+  const [accountDelete, setAccountDelete] = useState<AccountType | null>(null)
 
-  const data: ProductItem[] = useMemo(
-    () => [
-      {
-        _id: '1',
-        product_name: 'pizza bo',
-        menu_name: 'pizza',
-        description: 'ngon',
-        price: 100000,
-        image: '',
-        size: 'M',
-        status: 'Available',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        product_name: 'aizza bo',
-        menu_name: 'pizza',
-        description: 'ngon',
-        price: 100000,
-        image: '',
-        size: 'M',
-        status: 'Available',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-    ],
-    []
-  )
+  const { data: accountListRes, isLoading } = useGetAccountList()
+  const data = accountListRes?.payload?.data || []
+
+  const deleteAccountMutation = useDeleteAccountMutation()
+
+  const handleDeleteAccount = async () => {
+    if (!accountDelete) return
+    try {
+      const result = await deleteAccountMutation.mutateAsync(accountDelete._id)
+      toast.success(result.payload.message || 'Xóa nhân viên thành công!')
+      setAccountDelete(null)
+    } catch (error) {
+      handleErrorApi({
+        error
+      })
+    }
+  }
+
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [pagination, setPagination] = useState({
-    pageIndex, // Gía trị mặc định ban đầu, không có ý nghĩa khi data được fetch bất đồng bộ
-    pageSize: PAGE_SIZE //default page size
+    pageIndex,
+    pageSize: PAGE_SIZE
   })
 
   const table = useReactTable({
@@ -249,12 +250,13 @@ export default function AccountTable() {
   }, [table, pageIndex])
 
   return (
-    <ProductTableContext.Provider value={{ productIdEdit, setProductIdEdit, productDelete, setProductDelete }}>
+    <AccountTableContext.Provider value={{ accountIdEdit, setAccountIdEdit, accountDelete, setAccountDelete }}>
       <div className='w-full'>
-        <EditProduct id={productIdEdit} setId={setProductIdEdit} />
-        <AlertDialogDeleteProduct
-          productDelete={productDelete}
-          setProductDelete={setProductDelete}
+        <EditAccount id={accountIdEdit} setId={setAccountIdEdit} />
+        <AlertDialogDeleteAccount
+          accountDelete={accountDelete}
+          setAccountDelete={setAccountDelete}
+          onConfirm={handleDeleteAccount}
         />
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -262,13 +264,13 @@ export default function AccountTable() {
         </div>
         <div className='flex items-center py-4'>
           <Input
-            placeholder='Lọc tên'
-            value={(table.getColumn('product_name')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('product_name')?.setFilterValue(event.target.value)}
+            placeholder='Lọc tên nhân viên'
+            value={(table.getColumn('username')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('username')?.setFilterValue(event.target.value)}
             className='max-w-sm'
           />
           <div className='ml-auto flex items-center gap-4'>
-            <AddProducts />
+            <AddAccount />
             <DataTableViewOptions table={table} />
           </div>
         </div>
@@ -293,7 +295,13 @@ export default function AccountTable() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    Đang tải dữ liệu...
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -309,7 +317,7 @@ export default function AccountTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
+                    Không tìm thấy nhân viên nào.
                   </TableCell>
                 </TableRow>
               )}
@@ -325,11 +333,11 @@ export default function AccountTable() {
             <AutoPagination
               page={table.getState().pagination.pageIndex + 1}
               pageSize={table.getPageCount()}
-              pathname='/manage/products'
+              pathname='/manage/accounts'
             />
           </div>
         </div>
       </div>
-    </ProductTableContext.Provider>
+    </AccountTableContext.Provider>
   )
 }

@@ -1,5 +1,5 @@
 import z from 'zod'
-import { DiscountTypeValues } from '~/constants/type'
+import { DiscountTypeValues } from '@/constants/type'
 
 export const CreateLoyaltyProgramBody = z.object({
   name: z.string().min(1).max(255),

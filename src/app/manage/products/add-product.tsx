@@ -34,7 +34,7 @@ import {
 export default function AddProducts() {
   const [open, setOpen] = useState(false)
   const form = useForm<CreateProductBodyType>({
-    resolver: zodResolver(CreateProductBody),
+    resolver: zodResolver(CreateProductBody) as any,
     defaultValues: {
       product_name: '',
       menu_name: '',

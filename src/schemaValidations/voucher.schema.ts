@@ -1,4 +1,4 @@
-import { DiscountTypeValues } from '~/constants/type'
+import { DiscountTypeValues } from '@/constants/type'
 import z from 'zod'
 
 export const CreateVoucherBody = z.object({

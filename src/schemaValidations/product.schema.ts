@@ -1,4 +1,4 @@
-import { ProductStatusValues } from '~/constants/type'
+import { ProductStatusValues } from '@/constants/type'
 import z from 'zod'
 
 export const CreateProductBody = z.object({

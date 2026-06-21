@@ -12,10 +12,20 @@ import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from "@/components/logo"
 import Link from "next/link"
+import { useLoginMutation } from "@/queries/useAuth"
+import { useAuthStore } from "@/store"
+import { useAppStore } from "@/components/app-provider"
+import { generateSocketInstace, handleErrorApi } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const loginMutation = useLoginMutation();
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const setRole = useAppStore((state) => state.setRole);
+  const setSocket = useAppStore((state) => state.setSocket);
+  const router = useRouter();
 
   const form = useForm<LoginBodyType>({
     resolver: zodResolver(LoginBody),
@@ -25,8 +35,26 @@ export default function LoginForm() {
     }
   })
 
-  function onSubmit() {
-    console.log("me")
+  const isLoading = loginMutation.isPending;
+
+  async function onSubmit(data: LoginBodyType) {
+    if (isLoading) return;
+    try {
+      const result = await loginMutation.mutateAsync(data);
+      toast.success(result.payload.message || "Đăng nhập thành công!");
+      
+      const { account, accessToken, refreshToken } = result.payload.data;
+      setAuth(account, accessToken, refreshToken);
+      setRole(account.role);
+      setSocket(generateSocketInstace(accessToken));
+      
+      router.push("/manage/dashboard");
+    } catch (error) {
+      handleErrorApi({
+        error,
+        setError: form.setError
+      })
+    }
   }
 
   return (

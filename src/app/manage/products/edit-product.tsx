@@ -38,7 +38,7 @@ export default function EditProduct({
   onSubmitSuccess?: () => void
 }) {
   const form = useForm<UpdateProductBodyType>({
-    resolver: zodResolver(UpdateProductBody),
+    resolver: zodResolver(UpdateProductBody) as any,
     defaultValues: {
       product_name: '',
       menu_name: '',

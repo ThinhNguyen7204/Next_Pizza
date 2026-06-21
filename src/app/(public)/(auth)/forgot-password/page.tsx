@@ -1,3 +1,4 @@
+'use client'
 import Logo from "@/components/logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle, Mail } from "lucide-react";
