@@ -1,6 +1,6 @@
 "use client"
 
-import { TrendingUp } from "lucide-react"
+import { useMemo } from "react"
 import { Bar, BarChart, XAxis, YAxis } from "recharts"
 
 import {
@@ -18,84 +18,61 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 
-export const description = "A mixed bar chart"
-
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 90, fill: "var(--color-other)" },
-]
-
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  chrome: {
-    label: "Chrome",
-    color: "var(--chart-1)",
-  },
-  safari: {
-    label: "Safari",
-    color: "var(--chart-2)",
-  },
-  firefox: {
-    label: "Firefox",
-    color: "var(--chart-3)",
-  },
-  edge: {
-    label: "Edge",
-    color: "var(--chart-4)",
-  },
-  other: {
-    label: "Other",
-    color: "var(--chart-5)",
-  },
+  successOrders: {
+    label: "Số lượng bán",
+  }
 } satisfies ChartConfig
 
-export function ProductBarChart() {
+interface Props {
+  chartData: { product_name: string; successOrders: number }[]
+}
+
+export function ProductBarChart({ chartData }: Props) {
+  const formattedData = useMemo(() => {
+    return chartData.map((item, index) => ({
+      name: item.product_name,
+      successOrders: item.successOrders,
+      fill: `var(--chart-${(index % 5) + 1})`
+    }))
+  }, [chartData])
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bar Chart - Mixed</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Món ăn bán chạy</CardTitle>
+        <CardDescription>Top các món được đặt nhiều nhất</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer
-            data={chartData}
+            data={formattedData}
             layout="vertical"
             margin={{
-              left: 0,
+              left: 10,
             }}
           >
             <YAxis
-              dataKey="browser"
+              dataKey="name"
               type="category"
               tickLine={false}
-              tickMargin={10}
+              tickMargin={5}
               axisLine={false}
-              tickFormatter={(value) =>
-                chartConfig[value as keyof typeof chartConfig]?.label
-              }
+              tickFormatter={(value) => value.slice(0, 15) + (value.length > 15 ? '...' : '')}
             />
-            <XAxis dataKey="visitors" type="number" hide />
+            <XAxis dataKey="successOrders" type="number" hide />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey="visitors" layout="vertical" radius={5} />
+            <Bar dataKey="successOrders" layout="vertical" radius={5} />
           </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
         <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
+          Thống kê dựa trên các đơn hàng đã thanh toán thành công
         </div>
       </CardFooter>
     </Card>

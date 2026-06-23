@@ -1,6 +1,5 @@
 "use client"
 
-import { TrendingUp } from "lucide-react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 
 import {
@@ -19,64 +18,23 @@ import {
 } from "@/components/ui/chart"
 import { format, parse } from 'date-fns'
 
-export const description = "A linear line chart"
-
-const chartData = [
-  {
-    date: '01/01/2024',
-    revenue: 1000
-  },
-  {
-    date: '02/01/2024',
-    revenue: 2000
-  },
-  {
-    date: '03/01/2024',
-    revenue: 1500
-  },
-  {
-    date: '04/01/2024',
-    revenue: 3000
-  },
-  {
-    date: '05/01/2024',
-    revenue: 2500
-  },
-  {
-    date: '06/01/2024',
-    revenue: 4000
-  },
-  {
-    date: '07/01/2024',
-    revenue: 3500
-  },
-  {
-    date: '08/01/2024',
-    revenue: 5000
-  },
-  {
-    date: '09/01/2024',
-    revenue: 4500
-  },
-  {
-    date: '10/01/2024',
-    revenue: 6000
-  }
-]
-
 const chartConfig = {
   revenue: {
-    label: "revenue",
+    label: "Doanh thu",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig
 
-export function RevenueLineChart() {
+interface Props {
+  chartData: { date: string; revenue: number }[]
+}
+
+export function RevenueLineChart({ chartData }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Line Chart - Linear</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Doanh thu theo ngày</CardTitle>
+        <CardDescription>Xem biểu đồ diễn biến doanh thu</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -95,14 +53,12 @@ export function RevenueLineChart() {
               axisLine={false}
               tickMargin={8}
               tickFormatter={(value) => {
-                if (chartData.length < 8) {
+                try {
+                  const date = parse(value, 'yyyy-MM-dd', new Date())
+                  return format(date, 'dd/MM')
+                } catch (e) {
                   return value
                 }
-                if (chartData.length < 33) {
-                  const date = parse(value, 'dd/MM/yyyy', new Date())
-                  return format(date, 'dd')
-                }
-                return ''
               }}
             />
             <ChartTooltip
@@ -120,11 +76,8 @@ export function RevenueLineChart() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
         <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
+          Dữ liệu thống kê doanh số bán hàng trong khoảng thời gian đã chọn
         </div>
       </CardFooter>
     </Card>

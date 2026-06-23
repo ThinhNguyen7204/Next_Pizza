@@ -42,35 +42,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 import AutoPagination from '@/components/auto-pagination'
-import { useEffect, useState, useMemo, createContext, useContext } from 'react'
+import { useEffect, useState, createContext, useContext } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { DataTableColumnHeader } from '@/components/data-table-column-header'
 import { DataTableViewOptions } from '@/components/data-table-view-options'
-import AddProducts from '@/app/manage/products/add-product'
-import EditProduct from '@/app/manage/products/edit-product'
-import { ProductListResType } from '@/schemaValidations/product.schema'
-import { useProductListQuery, useDeleteProductMutation } from '@/queries/useProduct'
+import AddSupplier from '@/app/manage/suppliers/add-supplier'
+import EditSupplier from '@/app/manage/suppliers/edit-supplier'
+import { SupplierListResType } from '@/schemaValidations/supplier.schema'
+import { useGetSupplierList, useDeleteSupplierMutation } from '@/queries/useSupplier'
 import { toast } from 'sonner'
-import { formatCurrency, handleErrorApi } from '@/lib/utils'
+import { handleErrorApi } from '@/lib/utils'
 
-type ProductItem = ProductListResType['data'][0]
+type SupplierItem = SupplierListResType['data'][0]
 
-const ProductTableContext = createContext<{
-  setProductIdEdit: (value: string | undefined) => void
-  productIdEdit: string | undefined
-  productDelete: ProductItem | null
-  setProductDelete: (value: ProductItem | null) => void
+const SupplierTableContext = createContext<{
+  setSupplierIdEdit: (value: string | undefined) => void
+  supplierIdEdit: string | undefined
+  supplierDelete: SupplierItem | null
+  setSupplierDelete: (value: SupplierItem | null) => void
 }>({
-  setProductIdEdit: (value: string | undefined) => { },
-  productIdEdit: undefined,
-  productDelete: null,
-  setProductDelete: (value: ProductItem | null) => { }
+  setSupplierIdEdit: () => { },
+  supplierIdEdit: undefined,
+  supplierDelete: null,
+  setSupplierDelete: () => { }
 })
 
-export const columns: ColumnDef<ProductItem>[] = [
+export const columns: ColumnDef<SupplierItem>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -99,66 +98,42 @@ export const columns: ColumnDef<ProductItem>[] = [
     cell: ({ row }) => <span className="font-mono text-xs">{row.original._id}</span>
   },
   {
-    accessorKey: 'image',
-    header: 'Ảnh',
-    cell: ({ row }) => (
-      <Avatar className="w-10 h-10 rounded object-cover border border-charcoal/10">
-        <AvatarImage src={row.original.image || ''} alt={row.original.product_name} />
-        <AvatarFallback className="rounded-none">{row.original.product_name.slice(0, 2).toUpperCase()}</AvatarFallback>
-      </Avatar>
-    )
-  },
-  {
-    accessorKey: 'product_name',
+    accessorKey: 'supplier_name',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tên món" />
+      <DataTableColumnHeader column={column} title="Tên nhà cung cấp" />
     ),
   },
   {
-    accessorKey: 'menu_name',
-    header: 'Menu'
+    accessorKey: 'phone',
+    header: 'Số điện thoại',
+    cell: ({ row }) => <span>{row.original.phone || '-'}</span>
   },
   {
-    accessorKey: 'price',
-    header: 'Giá',
-    cell: ({ row }) => <span>{formatCurrency(row.original.price)}</span>
+    accessorKey: 'email',
+    header: 'Email',
+    cell: ({ row }) => <span>{row.original.email || '-'}</span>
   },
   {
-    accessorKey: 'size',
-    header: 'Size'
+    accessorKey: 'supplier_address',
+    header: 'Địa chỉ',
+    cell: ({ row }) => <span className="max-w-[200px] truncate block">{row.original.supplier_address || '-'}</span>
   },
   {
-    accessorKey: 'status',
-    header: 'Trạng thái',
-    cell: ({ row }) => {
-      const status = row.original.status
-      return (
-        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-          status === 'Available' ? 'bg-green-100 text-green-800' :
-          status === 'Unavailable' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {status === 'Available' ? 'Có sẵn' :
-           status === 'Unavailable' ? 'Hết hàng' : 'Ẩn'}
-        </span>
-      )
-    }
-  },
-  {
-    accessorKey: 'description',
-    header: 'Mô tả',
-    cell: ({ row }) => <span className="max-w-[200px] truncate block">{row.original.description}</span>
+    accessorKey: 'rating',
+    header: 'Đánh giá',
+    cell: ({ row }) => <span>{row.original.rating ? `${row.original.rating} ★` : '-'}</span>
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: function Actions({ row }) {
-      const { setProductIdEdit, setProductDelete } = useContext(ProductTableContext)
-      const openEditProduct = () => {
-        setProductIdEdit(row.original._id)
+      const { setSupplierIdEdit, setSupplierDelete } = useContext(SupplierTableContext)
+      const openEditSupplier = () => {
+        setSupplierIdEdit(row.original._id)
       }
 
-      const openDeleteProduct = () => {
-        setProductDelete(row.original)
+      const openDeleteSupplier = () => {
+        setSupplierDelete(row.original)
       }
       return (
         <DropdownMenu modal={false}>
@@ -171,8 +146,8 @@ export const columns: ColumnDef<ProductItem>[] = [
           <DropdownMenuContent align='end'>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={openEditProduct}>Sửa</DropdownMenuItem>
-            <DropdownMenuItem onClick={openDeleteProduct}>Xóa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openEditSupplier}>Sửa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openDeleteSupplier}>Xóa</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -180,29 +155,29 @@ export const columns: ColumnDef<ProductItem>[] = [
   },
 ]
 
-function AlertDialogDeleteProduct({
-  productDelete,
-  setProductDelete,
+function AlertDialogDeleteSupplier({
+  supplierDelete,
+  setSupplierDelete,
   onConfirm
 }: {
-  productDelete: ProductItem | null
-  setProductDelete: (value: ProductItem | null) => void
+  supplierDelete: SupplierItem | null
+  setSupplierDelete: (value: SupplierItem | null) => void
   onConfirm: () => void
 }) {
   return (
     <AlertDialog
-      open={Boolean(productDelete)}
+      open={Boolean(supplierDelete)}
       onOpenChange={(value) => {
         if (!value) {
-          setProductDelete(null)
+          setSupplierDelete(null)
         }
       }}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa món ăn?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa nhà cung cấp?</AlertDialogTitle>
           <AlertDialogDescription>
-            Món <span className='bg-foreground text-primary-foreground rounded px-1'>{productDelete?.product_name}</span> sẽ bị xóa vĩnh viễn.
+            Nhà cung cấp <span className='bg-foreground text-primary-foreground rounded px-1'>{supplierDelete?.supplier_name}</span> sẽ bị xóa vĩnh viễn khỏi danh sách.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -215,24 +190,24 @@ function AlertDialogDeleteProduct({
 }
 
 const PAGE_SIZE = 10
-export default function ProductTable() {
+export default function SupplierTable() {
   const searchParam = useSearchParams()
   const page = searchParam.get('page') ? Number(searchParam.get('page')) : 1
   const pageIndex = page - 1
-  const [productIdEdit, setProductIdEdit] = useState<string | undefined>()
-  const [productDelete, setProductDelete] = useState<ProductItem | null>(null)
+  const [supplierIdEdit, setSupplierIdEdit] = useState<string | undefined>()
+  const [supplierDelete, setSupplierDelete] = useState<SupplierItem | null>(null)
 
-  const { data: productListRes, isLoading } = useProductListQuery()
-  const data = productListRes?.payload?.data || []
+  const { data: supplierListRes, isLoading } = useGetSupplierList()
+  const data = supplierListRes?.payload?.data || []
 
-  const deleteProductMutation = useDeleteProductMutation()
+  const deleteSupplierMutation = useDeleteSupplierMutation()
 
-  const handleDeleteProduct = async () => {
-    if (!productDelete) return
+  const handleDeleteSupplier = async () => {
+    if (!supplierDelete) return
     try {
-      const result = await deleteProductMutation.mutateAsync(productDelete._id)
-      toast.success(result.payload.message || 'Xóa món ăn thành công!')
-      setProductDelete(null)
+      const result = await deleteSupplierMutation.mutateAsync(supplierDelete._id)
+      toast.success(result.payload.message || 'Xóa nhà cung cấp thành công!')
+      setSupplierDelete(null)
     } catch (error) {
       handleErrorApi({
         error
@@ -277,13 +252,13 @@ export default function ProductTable() {
   }, [table, pageIndex])
 
   return (
-    <ProductTableContext.Provider value={{ productIdEdit, setProductIdEdit, productDelete, setProductDelete }}>
+    <SupplierTableContext.Provider value={{ supplierIdEdit, setSupplierIdEdit, supplierDelete, setSupplierDelete }}>
       <div className='w-full'>
-        <EditProduct id={productIdEdit} setId={setProductIdEdit} />
-        <AlertDialogDeleteProduct
-          productDelete={productDelete}
-          setProductDelete={setProductDelete}
-          onConfirm={handleDeleteProduct}
+        <EditSupplier id={supplierIdEdit} setId={setSupplierIdEdit} />
+        <AlertDialogDeleteSupplier
+          supplierDelete={supplierDelete}
+          setSupplierDelete={setSupplierDelete}
+          onConfirm={handleDeleteSupplier}
         />
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -291,13 +266,13 @@ export default function ProductTable() {
         </div>
         <div className='flex items-center py-4'>
           <Input
-            placeholder='Lọc tên món ăn'
-            value={(table.getColumn('product_name')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('product_name')?.setFilterValue(event.target.value)}
+            placeholder='Lọc tên nhà cung cấp'
+            value={(table.getColumn('supplier_name')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('supplier_name')?.setFilterValue(event.target.value)}
             className='max-w-sm'
           />
           <div className='ml-auto flex items-center gap-4'>
-            <AddProducts />
+            <AddSupplier />
             <DataTableViewOptions table={table} />
           </div>
         </div>
@@ -310,11 +285,11 @@ export default function ProductTable() {
                     return (
                       <TableHead key={header.id}>
                         {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                           ? null
+                           : flexRender(
+                             header.column.columnDef.header,
+                             header.getContext()
+                           )}
                       </TableHead>
                     )
                   })}
@@ -344,7 +319,7 @@ export default function ProductTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    Không có sản phẩm nào.
+                    Không có nhà cung cấp nào.
                   </TableCell>
                 </TableRow>
               )}
@@ -360,11 +335,11 @@ export default function ProductTable() {
             <AutoPagination
               page={table.getState().pagination.pageIndex + 1}
               pageSize={table.getPageCount()}
-              pathname='/manage/products'
+              pathname='/manage/suppliers'
             />
           </div>
         </div>
       </div>
-    </ProductTableContext.Provider>
+    </SupplierTableContext.Provider>
   )
 }

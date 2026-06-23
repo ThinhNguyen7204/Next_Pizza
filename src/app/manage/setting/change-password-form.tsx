@@ -1,26 +1,24 @@
 'use client'
-import { CreateProductBody, CreateProductBodyType } from "@/schemaValidations/product.schema"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardAction,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ChangePasswordBody, ChangePasswordBodyType, UpdateMeBody, UpdateMeBodyType } from "@/schemaValidations/account.schema"
+import { ChangePasswordBody, ChangePasswordBodyType } from "@/schemaValidations/account.schema"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useChangePasswordMutation } from "@/queries/useAccount"
+import { toast } from "sonner"
+import { handleErrorApi } from "@/lib/utils"
 
 export default function ChangePasswordForm() {
+  const changePasswordMutation = useChangePasswordMutation()
+
   const form = useForm<ChangePasswordBodyType>({
     resolver: zodResolver(ChangePasswordBody),
     defaultValues: {
@@ -30,8 +28,18 @@ export default function ChangePasswordForm() {
     }
   })
 
-  function onSubmit() {
-    console.log("me")
+  const onSubmit = async (values: ChangePasswordBodyType) => {
+    if (changePasswordMutation.isPending) return
+    try {
+      const result = await changePasswordMutation.mutateAsync(values)
+      toast.success(result.payload.message || 'Đổi mật khẩu thành công!')
+      form.reset()
+    } catch (error) {
+      handleErrorApi({
+        error,
+        setError: form.setError
+      })
+    }
   }
 
   return (
@@ -43,7 +51,6 @@ export default function ChangePasswordForm() {
       <Card x-chunk='dashboard-07-chunk-0'>
         <CardHeader>
           <CardTitle>Đổi mật khẩu</CardTitle>
-
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
@@ -53,14 +60,15 @@ export default function ChangePasswordForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-title">
+                  <FieldLabel htmlFor="old-password">
                     Mật khẩu cũ
                   </FieldLabel>
                   <Input
                     {...field}
-                    id="form-rhf-demo-title"
+                    id="old-password"
+                    type="password"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Vui lòng nhập đầy đủ họ và tên"
+                    placeholder="Nhập mật khẩu hiện tại của bạn"
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
@@ -75,14 +83,15 @@ export default function ChangePasswordForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-title">
+                  <FieldLabel htmlFor="new-password">
                     Mật khẩu mới
                   </FieldLabel>
                   <Input
                     {...field}
-                    id="form-rhf-demo-title"
+                    id="new-password"
+                    type="password"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Vui lòng nhập đầy đủ họ và tên"
+                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
@@ -97,14 +106,15 @@ export default function ChangePasswordForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-title">
+                  <FieldLabel htmlFor="confirm-new-password">
                     Nhập lại mật khẩu mới
                   </FieldLabel>
                   <Input
                     {...field}
-                    id="form-rhf-demo-title"
+                    id="confirm-new-password"
+                    type="password"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Vui lòng nhập đầy đủ họ và tên"
+                    placeholder="Xác nhận lại mật khẩu mới"
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
@@ -115,11 +125,11 @@ export default function ChangePasswordForm() {
             />
 
             <div className=' items-center gap-2 md:ml-auto flex'>
-              <Button variant='outline' size='sm' type='reset'>
+              <Button variant='outline' size='sm' type='reset' onClick={() => form.reset()}>
                 Hủy
               </Button>
-              <Button size='sm' type='submit'>
-                Lưu thông tin
+              <Button size='sm' type='submit' disabled={changePasswordMutation.isPending}>
+                {changePasswordMutation.isPending ? 'Đang lưu...' : 'Lưu thông tin'}
               </Button>
             </div>
           </div>

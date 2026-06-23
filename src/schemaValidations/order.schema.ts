@@ -19,7 +19,8 @@ export const CreateOrderBody = z.object({
   discountAmount: z.number().optional(),
   discountLytP: z.number().optional(),
   finalPrice: z.number().optional(),
-  paid: z.number().optional()
+  paid: z.number().optional(),
+  status: z.string().optional()
 })
 export type CreateOrderBodyType = z.TypeOf<typeof CreateOrderBody>
 

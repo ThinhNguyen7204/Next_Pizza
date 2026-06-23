@@ -42,35 +42,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 
 import AutoPagination from '@/components/auto-pagination'
-import { useEffect, useState, useMemo, createContext, useContext } from 'react'
+import { useEffect, useState, createContext, useContext } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { DataTableColumnHeader } from '@/components/data-table-column-header'
 import { DataTableViewOptions } from '@/components/data-table-view-options'
-import AddProducts from '@/app/manage/products/add-product'
-import EditProduct from '@/app/manage/products/edit-product'
-import { ProductListResType } from '@/schemaValidations/product.schema'
-import { useProductListQuery, useDeleteProductMutation } from '@/queries/useProduct'
+import AddPromote from '@/app/manage/promotes/add-promote'
+import EditPromote from '@/app/manage/promotes/edit-promote'
+import { LoyaltyProgramListResType } from '@/schemaValidations/loyaltyProgram.schema'
+import { useGetLoyaltyProgramList, useDeleteLoyaltyProgramMutation } from '@/queries/useLoyaltyProgram'
 import { toast } from 'sonner'
 import { formatCurrency, handleErrorApi } from '@/lib/utils'
+import { DiscountType } from '@/constants/type'
 
-type ProductItem = ProductListResType['data'][0]
+type PromoteItem = LoyaltyProgramListResType['data'][0]
 
-const ProductTableContext = createContext<{
-  setProductIdEdit: (value: string | undefined) => void
-  productIdEdit: string | undefined
-  productDelete: ProductItem | null
-  setProductDelete: (value: ProductItem | null) => void
+const PromoteTableContext = createContext<{
+  setPromoteIdEdit: (value: string | undefined) => void
+  promoteIdEdit: string | undefined
+  promoteDelete: PromoteItem | null
+  setPromoteDelete: (value: PromoteItem | null) => void
 }>({
-  setProductIdEdit: (value: string | undefined) => { },
-  productIdEdit: undefined,
-  productDelete: null,
-  setProductDelete: (value: ProductItem | null) => { }
+  setPromoteIdEdit: () => { },
+  promoteIdEdit: undefined,
+  promoteDelete: null,
+  setPromoteDelete: () => { }
 })
 
-export const columns: ColumnDef<ProductItem>[] = [
+export const columns: ColumnDef<PromoteItem>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -99,66 +100,62 @@ export const columns: ColumnDef<ProductItem>[] = [
     cell: ({ row }) => <span className="font-mono text-xs">{row.original._id}</span>
   },
   {
-    accessorKey: 'image',
-    header: 'Ảnh',
-    cell: ({ row }) => (
-      <Avatar className="w-10 h-10 rounded object-cover border border-charcoal/10">
-        <AvatarImage src={row.original.image || ''} alt={row.original.product_name} />
-        <AvatarFallback className="rounded-none">{row.original.product_name.slice(0, 2).toUpperCase()}</AvatarFallback>
-      </Avatar>
-    )
-  },
-  {
-    accessorKey: 'product_name',
+    accessorKey: 'name',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tên món" />
+      <DataTableColumnHeader column={column} title="Tên chương trình" />
     ),
   },
   {
-    accessorKey: 'menu_name',
-    header: 'Menu'
+    accessorKey: 'points_required',
+    header: 'Điểm yêu cầu',
+    cell: ({ row }) => <span>{row.original.points_required} điểm</span>
   },
   {
-    accessorKey: 'price',
-    header: 'Giá',
-    cell: ({ row }) => <span>{formatCurrency(row.original.price)}</span>
-  },
-  {
-    accessorKey: 'size',
-    header: 'Size'
-  },
-  {
-    accessorKey: 'status',
-    header: 'Trạng thái',
+    accessorKey: 'discount_type',
+    header: 'Loại giảm',
     cell: ({ row }) => {
-      const status = row.original.status
+      const type = row.original.discount_type
       return (
-        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-          status === 'Available' ? 'bg-green-100 text-green-800' :
-          status === 'Unavailable' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {status === 'Available' ? 'Có sẵn' :
-           status === 'Unavailable' ? 'Hết hàng' : 'Ẩn'}
+        <span>{type === DiscountType.Percentage ? 'Phần trăm' : 'Cố định'}</span>
+      )
+    }
+  },
+  {
+    accessorKey: 'discount_value',
+    header: 'Mức giảm',
+    cell: ({ row }) => {
+      const value = row.original.discount_value
+      const type = row.original.discount_type
+      return (
+        <span>
+          {type === DiscountType.Percentage ? `${value}%` : formatCurrency(value)}
         </span>
       )
     }
   },
   {
-    accessorKey: 'description',
-    header: 'Mô tả',
-    cell: ({ row }) => <span className="max-w-[200px] truncate block">{row.original.description}</span>
+    accessorKey: 'is_active',
+    header: 'Trạng thái',
+    cell: ({ row }) => {
+      const active = row.original.is_active
+      return (
+        <Badge variant={active ? 'default' : 'secondary'}>
+          {active ? 'Hoạt động' : 'Tạm ngưng'}
+        </Badge>
+      )
+    }
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: function Actions({ row }) {
-      const { setProductIdEdit, setProductDelete } = useContext(ProductTableContext)
-      const openEditProduct = () => {
-        setProductIdEdit(row.original._id)
+      const { setPromoteIdEdit, setPromoteDelete } = useContext(PromoteTableContext)
+      const openEditPromote = () => {
+        setPromoteIdEdit(row.original._id)
       }
 
-      const openDeleteProduct = () => {
-        setProductDelete(row.original)
+      const openDeletePromote = () => {
+        setPromoteDelete(row.original)
       }
       return (
         <DropdownMenu modal={false}>
@@ -171,8 +168,8 @@ export const columns: ColumnDef<ProductItem>[] = [
           <DropdownMenuContent align='end'>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={openEditProduct}>Sửa</DropdownMenuItem>
-            <DropdownMenuItem onClick={openDeleteProduct}>Xóa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openEditPromote}>Sửa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openDeletePromote}>Xóa</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -180,29 +177,29 @@ export const columns: ColumnDef<ProductItem>[] = [
   },
 ]
 
-function AlertDialogDeleteProduct({
-  productDelete,
-  setProductDelete,
+function AlertDialogDeletePromote({
+  promoteDelete,
+  setPromoteDelete,
   onConfirm
 }: {
-  productDelete: ProductItem | null
-  setProductDelete: (value: ProductItem | null) => void
+  promoteDelete: PromoteItem | null
+  setPromoteDelete: (value: PromoteItem | null) => void
   onConfirm: () => void
 }) {
   return (
     <AlertDialog
-      open={Boolean(productDelete)}
+      open={Boolean(promoteDelete)}
       onOpenChange={(value) => {
         if (!value) {
-          setProductDelete(null)
+          setPromoteDelete(null)
         }
       }}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa món ăn?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa ưu đãi?</AlertDialogTitle>
           <AlertDialogDescription>
-            Món <span className='bg-foreground text-primary-foreground rounded px-1'>{productDelete?.product_name}</span> sẽ bị xóa vĩnh viễn.
+            Chương trình ưu đãi <span className='bg-foreground text-primary-foreground rounded px-1'>{promoteDelete?.name}</span> sẽ bị xóa vĩnh viễn khỏi hệ thống.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -215,24 +212,24 @@ function AlertDialogDeleteProduct({
 }
 
 const PAGE_SIZE = 10
-export default function ProductTable() {
+export default function PromoteTable() {
   const searchParam = useSearchParams()
   const page = searchParam.get('page') ? Number(searchParam.get('page')) : 1
   const pageIndex = page - 1
-  const [productIdEdit, setProductIdEdit] = useState<string | undefined>()
-  const [productDelete, setProductDelete] = useState<ProductItem | null>(null)
+  const [promoteIdEdit, setPromoteIdEdit] = useState<string | undefined>()
+  const [promoteDelete, setPromoteDelete] = useState<PromoteItem | null>(null)
 
-  const { data: productListRes, isLoading } = useProductListQuery()
-  const data = productListRes?.payload?.data || []
+  const { data: promoteListRes, isLoading } = useGetLoyaltyProgramList()
+  const data = promoteListRes?.payload?.data || []
 
-  const deleteProductMutation = useDeleteProductMutation()
+  const deletePromoteMutation = useDeleteLoyaltyProgramMutation()
 
-  const handleDeleteProduct = async () => {
-    if (!productDelete) return
+  const handleDeletePromote = async () => {
+    if (!promoteDelete) return
     try {
-      const result = await deleteProductMutation.mutateAsync(productDelete._id)
-      toast.success(result.payload.message || 'Xóa món ăn thành công!')
-      setProductDelete(null)
+      const result = await deletePromoteMutation.mutateAsync(promoteDelete._id)
+      toast.success(result.payload.message || 'Xóa ưu đãi thành công!')
+      setPromoteDelete(null)
     } catch (error) {
       handleErrorApi({
         error
@@ -277,13 +274,13 @@ export default function ProductTable() {
   }, [table, pageIndex])
 
   return (
-    <ProductTableContext.Provider value={{ productIdEdit, setProductIdEdit, productDelete, setProductDelete }}>
+    <PromoteTableContext.Provider value={{ promoteIdEdit, setPromoteIdEdit, promoteDelete, setPromoteDelete }}>
       <div className='w-full'>
-        <EditProduct id={productIdEdit} setId={setProductIdEdit} />
-        <AlertDialogDeleteProduct
-          productDelete={productDelete}
-          setProductDelete={setProductDelete}
-          onConfirm={handleDeleteProduct}
+        <EditPromote id={promoteIdEdit} setId={setPromoteIdEdit} />
+        <AlertDialogDeletePromote
+          promoteDelete={promoteDelete}
+          setPromoteDelete={setPromoteDelete}
+          onConfirm={handleDeletePromote}
         />
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -291,13 +288,13 @@ export default function ProductTable() {
         </div>
         <div className='flex items-center py-4'>
           <Input
-            placeholder='Lọc tên món ăn'
-            value={(table.getColumn('product_name')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('product_name')?.setFilterValue(event.target.value)}
+            placeholder='Lọc tên chương trình'
+            value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
             className='max-w-sm'
           />
           <div className='ml-auto flex items-center gap-4'>
-            <AddProducts />
+            <AddPromote />
             <DataTableViewOptions table={table} />
           </div>
         </div>
@@ -310,11 +307,11 @@ export default function ProductTable() {
                     return (
                       <TableHead key={header.id}>
                         {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                           ? null
+                           : flexRender(
+                             header.column.columnDef.header,
+                             header.getContext()
+                           )}
                       </TableHead>
                     )
                   })}
@@ -344,7 +341,7 @@ export default function ProductTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    Không có sản phẩm nào.
+                    Không có chương trình ưu đãi nào.
                   </TableCell>
                 </TableRow>
               )}
@@ -360,11 +357,11 @@ export default function ProductTable() {
             <AutoPagination
               page={table.getState().pagination.pageIndex + 1}
               pageSize={table.getPageCount()}
-              pathname='/manage/products'
+              pathname='/manage/promotes'
             />
           </div>
         </div>
       </div>
-    </ProductTableContext.Provider>
+    </PromoteTableContext.Provider>
   )
 }
