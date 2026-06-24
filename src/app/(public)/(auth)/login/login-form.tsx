@@ -48,7 +48,11 @@ export default function LoginForm() {
       setRole(account.role);
       setSocket(generateSocketInstace(accessToken));
       
-      router.push("/manage/dashboard");
+      if (account.role === 'Customer') {
+        router.push("/");
+      } else {
+        router.push("/manage/dashboard");
+      }
     } catch (error) {
       handleErrorApi({
         error,

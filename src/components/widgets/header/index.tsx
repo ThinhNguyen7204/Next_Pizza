@@ -136,7 +136,7 @@ export default function Header() {
 
                       {user?.role !== "Customer" && (
                         <Link
-                          href="/dashboard"
+                          href="/manage/dashboard"
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-sans text-charcoal hover:bg-primary/5 rounded-lg transition-all duration-200 group"
                         >
@@ -144,6 +144,7 @@ export default function Header() {
                           <span className="font-medium text-primary">Admin Dashboard</span>
                         </Link>
                       )}
+
                     </div>
 
                     <div className="h-px bg-charcoal/5 my-1.5 mx-2" />

@@ -27,6 +27,11 @@ const menuItems = [
     // roles: [Role.Owner, Role.Employee]
   },
   {
+    title: "Danh mục",
+    Icon: Table,
+    href: "/manage/menus",
+  },
+  {
     title: "Đơn hàng",
     Icon: ShoppingCart,
     href: "/manage/orders",

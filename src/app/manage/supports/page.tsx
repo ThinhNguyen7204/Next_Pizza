@@ -1,20 +1,19 @@
-import OrderTable from '@/app/manage/orders/order-table'
+import SupportTable from '@/app/manage/supports/support-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Suspense } from 'react'
 
-export default async function OrderPage() {
-
+export default async function SupportPage() {
   return (
     <main className='grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8'>
       <div className='space-y-2'>
         <Card x-chunk='dashboard-06-chunk-0'>
           <CardHeader>
-            <CardTitle>Đơn hàng</CardTitle>
-            <CardDescription>Quản lý đơn hàng</CardDescription>
+            <CardTitle>Hỗ trợ khách hàng</CardTitle>
+            <CardDescription>Quản lý các phản hồi, thắc mắc và yêu cầu hỗ trợ từ khách hàng</CardDescription>
           </CardHeader>
           <CardContent>
-            <Suspense fallback={<div>Đang tải danh sách đơn hàng...</div>}>
-              <OrderTable />
+            <Suspense fallback={<div>Đang tải dữ liệu phản hồi...</div>}>
+              <SupportTable />
             </Suspense>
           </CardContent>
         </Card>
@@ -22,4 +21,3 @@ export default async function OrderPage() {
     </main>
   )
 }
-

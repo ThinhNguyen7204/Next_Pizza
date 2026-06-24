@@ -130,7 +130,7 @@ export const columns: ColumnDef<OrderItem>[] = [
   {
     accessorKey: 'finalPrice',
     header: 'Tổng tiền',
-    cell: ({ row }) => <span className="font-medium text-black">{formatCurrency(row.original.finalPrice)}</span>
+    cell: ({ row }) => <span className="font-semibold">{formatCurrency(row.original.finalPrice)}</span>
   },
   {
     accessorKey: 'status',
@@ -153,17 +153,17 @@ export const columns: ColumnDef<OrderItem>[] = [
 
       return (
         <Select onValueChange={handleStatusChange} value={currentStatus} disabled={updateOrderMutation.isPending}>
-          <SelectTrigger className={`w-[140px] text-xs h-8 font-semibold rounded-full ${
-            currentStatus === OrderStatus.Pending ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
-            currentStatus === OrderStatus.Processing ? 'bg-blue-50 border-blue-200 text-blue-800' :
-            currentStatus === OrderStatus.Shipping ? 'bg-indigo-50 border-indigo-200 text-indigo-800' :
-            currentStatus === OrderStatus.Delivered ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-            currentStatus === OrderStatus.Paid ? 'bg-green-100 border-green-200 text-green-800 font-bold' :
-            'bg-red-50 border-red-200 text-red-800'
+          <SelectTrigger className={`w-[140px] text-xs h-8 font-semibold rounded-full border ${
+            currentStatus === OrderStatus.Pending ? 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/30 dark:border-yellow-900/50 dark:text-yellow-400' :
+            currentStatus === OrderStatus.Processing ? 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400' :
+            currentStatus === OrderStatus.Shipping ? 'bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/30 dark:border-indigo-900/50 dark:text-indigo-400' :
+            currentStatus === OrderStatus.Delivered ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-400' :
+            currentStatus === OrderStatus.Paid ? 'bg-green-100 border-green-200 text-green-800 dark:bg-green-950/40 dark:border-green-900/50 dark:text-green-400 font-bold' :
+            'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400'
           }`}>
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
-          <SelectContent className="bg-white text-black text-xs">
+          <SelectContent className="text-xs">
             <SelectItem value={OrderStatus.Pending}>Chờ xử lý</SelectItem>
             <SelectItem value={OrderStatus.Processing}>Đang chế biến</SelectItem>
             <SelectItem value={OrderStatus.Shipping}>Đang giao</SelectItem>
@@ -371,17 +371,17 @@ export default function OrderTable() {
             placeholder='Lọc ID Khách hàng'
             value={customerIdFilter}
             onChange={(e) => setCustomerIdFilter(e.target.value)}
-            className='max-w-xs text-black'
+            className='max-w-xs'
           />
 
           {/* Status Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-charcoal/70">Trạng thái:</span>
+            <span className="text-sm text-muted-foreground">Trạng thái:</span>
             <Select onValueChange={setStatusFilter} value={statusFilter}>
-              <SelectTrigger className="w-[150px] text-black">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Lọc trạng thái" />
               </SelectTrigger>
-              <SelectContent className="bg-white text-black">
+              <SelectContent>
                 <SelectItem value="All">Tất cả</SelectItem>
                 <SelectItem value={OrderStatus.Pending}>Chờ xử lý</SelectItem>
                 <SelectItem value={OrderStatus.Processing}>Đang chế biến</SelectItem>

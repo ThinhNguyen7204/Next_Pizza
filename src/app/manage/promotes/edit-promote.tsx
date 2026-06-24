@@ -155,7 +155,7 @@ export default function EditPromote({ id, setId }: Props) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="edit-promote-type">Loại giảm giá</FieldLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full text-black">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Chọn loại giảm giá" />
                     </SelectTrigger>
                     <SelectContent>
@@ -201,7 +201,7 @@ export default function EditPromote({ id, setId }: Props) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="edit-promote-active">Trạng thái</FieldLabel>
                   <Select onValueChange={(val) => field.onChange(val === 'true')} value={field.value ? 'true' : 'false'}>
-                    <SelectTrigger className="w-full text-black">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent>

@@ -2,6 +2,7 @@ import DropdownAvatar from "@/app/manage/dropdown-avatar"
 import MobileNavLinks from "@/app/manage/mobile-nav-links"
 import NavLinks from "@/app/manage/nav-links"
 import DarkModeToggle from "@/components/dark-mode-toggle"
+import AdminGuard from "@/components/admin-guard"
 
 export default function Layout({
   children
@@ -9,7 +10,7 @@ export default function Layout({
   children: React.ReactNode
 }) {
   return (
-    <>
+    <AdminGuard>
       <div className='flex min-h-screen w-full flex-col bg-muted/40'>
         <NavLinks />
         <div className='flex flex-col sm:gap-4 sm:py-4 sm:pl-14'>
@@ -25,6 +26,6 @@ export default function Layout({
           {children}
         </div>
       </div>
-    </>
+    </AdminGuard>
   )
 }

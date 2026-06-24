@@ -6,7 +6,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="flex flex-col min-h-screen bg-cream text-charcoal selection:bg-primary/30">
       <Header />
-      {/* <CartPopUpModal /> */}
+      <CartPopUpModal />
+
       <main className='grow'>{children}</main>
       <Footer />
     </div>

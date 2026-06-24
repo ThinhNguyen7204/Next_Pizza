@@ -256,7 +256,8 @@ export default function EditProduct({ id, setId }: Props) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="edit-product-status">Trạng thái</FieldLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full text-black">
+                    <SelectTrigger className="w-full">
+
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent>

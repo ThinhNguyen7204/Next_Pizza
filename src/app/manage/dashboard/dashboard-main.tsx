@@ -50,21 +50,21 @@ export default function DashBoardMain() {
     <div className="space-y-4">
       <div className='flex flex-wrap gap-2 items-center'>
         <div className='flex items-center'>
-          <span className='mr-2 text-sm text-charcoal/70'>Từ</span>
+          <span className='mr-2 text-sm text-muted-foreground'>Từ</span>
           <Input
             type='datetime-local'
             placeholder='Từ ngày'
-            className='text-sm text-black'
+            className='text-sm'
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
           />
         </div>
         <div className='flex items-center'>
-          <span className='mr-2 text-sm text-charcoal/70'>Đến</span>
+          <span className='mr-2 text-sm text-muted-foreground'>Đến</span>
           <Input
             type='datetime-local'
             placeholder='Đến ngày'
-            className='text-sm text-black'
+            className='text-sm'
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
@@ -75,7 +75,7 @@ export default function DashBoardMain() {
       </div>
 
       {isLoading ? (
-        <div className="h-64 flex items-center justify-center text-charcoal/50">
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
           Đang tải dữ liệu báo cáo...
         </div>
       ) : (
@@ -83,7 +83,7 @@ export default function DashBoardMain() {
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium text-black'>Tổng doanh thu</CardTitle>
+                <CardTitle className='text-sm font-medium'>Tổng doanh thu</CardTitle>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   viewBox='0 0 24 24'
@@ -98,7 +98,7 @@ export default function DashBoardMain() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold text-black'>
+                <div className='text-2xl font-bold'>
                   {stats ? formatCurrency(stats.revenue) : '0đ'}
                 </div>
               </CardContent>
@@ -106,7 +106,7 @@ export default function DashBoardMain() {
 
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium text-black'>Khách hàng</CardTitle>
+                <CardTitle className='text-sm font-medium'>Khách hàng</CardTitle>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   viewBox='0 0 24 24'
@@ -123,14 +123,15 @@ export default function DashBoardMain() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold text-black'>{stats?.guestCount || 0}</div>
-                <p className='text-xs text-muted-foreground'>Khách hàng thành công</p>
+                <div className='text-2xl font-bold'>{stats?.guestCount || 0}</div>
+                <p className='text-xs text-muted-foreground'>Khách có đơn hàng hoàn tất</p>
+
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium text-black'>Đơn hàng</CardTitle>
+                <CardTitle className='text-sm font-medium'>Đơn hàng</CardTitle>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   viewBox='0 0 24 24'
@@ -146,14 +147,14 @@ export default function DashBoardMain() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold text-black'>{stats?.orderCount || 0}</div>
+                <div className='text-2xl font-bold'>{stats?.orderCount || 0}</div>
                 <p className='text-xs text-muted-foreground'>Đã hoàn thành/thanh toán</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium text-black'>Bàn đang phục vụ</CardTitle>
+                <CardTitle className='text-sm font-medium'>Bàn đang phục vụ</CardTitle>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   viewBox='0 0 24 24'
@@ -168,7 +169,7 @@ export default function DashBoardMain() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold text-black'>{stats?.servingTableCount || 0}</div>
+                <div className='text-2xl font-bold'>{stats?.servingTableCount || 0}</div>
                 <p className='text-xs text-muted-foreground'>Đơn đang chế biến/giao hàng</p>
               </CardContent>
             </Card>

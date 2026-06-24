@@ -126,7 +126,7 @@ export default function AddVoucher() {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="voucher-type">Loại giảm giá</FieldLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full text-black">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Chọn loại giảm giá" />
                     </SelectTrigger>
                     <SelectContent>
@@ -281,7 +281,7 @@ export default function AddVoucher() {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="voucher-active">Trạng thái</FieldLabel>
                   <Select onValueChange={(val) => field.onChange(val === 'true')} value={field.value ? 'true' : 'false'}>
-                    <SelectTrigger className="w-full text-black">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent>

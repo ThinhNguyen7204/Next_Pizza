@@ -218,7 +218,7 @@ export default function EditAccount({ id, setId }: Props) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="edit-account-role">Vai trò</FieldLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full text-black">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Chọn vai trò" />
                     </SelectTrigger>
                     <SelectContent>
@@ -245,7 +245,7 @@ export default function EditAccount({ id, setId }: Props) {
                 onChange={(e) => form.setValue('changePassword', e.target.checked)}
                 className="w-4 h-4 rounded text-primary focus:ring-primary"
               />
-              <label htmlFor="change-password-checkbox" className="text-sm text-charcoal font-medium cursor-pointer">
+              <label htmlFor="change-password-checkbox" className="text-sm text-foreground font-medium cursor-pointer">
                 Đổi mật khẩu tài khoản này
               </label>
             </div>
