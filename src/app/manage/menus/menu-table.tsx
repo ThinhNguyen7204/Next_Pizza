@@ -167,7 +167,7 @@ function AlertDialogDeleteMenu({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa danh mục này?</AlertDialogTitle>
           <AlertDialogDescription>
-            Danh mục <span className='bg-foreground text-primary-foreground rounded px-1 font-mono text-xs'>{menuDelete?.menu_name}</span> sẽ bị xóa vĩnh viễn khỏi danh sách hệ thống.
+            Danh mục <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs font-semibold'>{menuDelete?.menu_name}</span> sẽ bị xóa vĩnh viễn khỏi danh sách hệ thống.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -219,6 +219,7 @@ export default function MenuTable() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -235,11 +236,11 @@ export default function MenuTable() {
   })
 
   useEffect(() => {
-    table.setPagination({
+    setPagination({
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+  }, [pageIndex])
 
   return (
     <MenuTableContext.Provider value={{ menuIdEdit, setMenuIdEdit, menuDelete, setMenuDelete }}>

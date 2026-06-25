@@ -5,9 +5,16 @@ import { cn } from '@/lib/utils'
 import { Package2, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAppStore } from '@/components/app-provider'
+import { RoleType } from '@/types/jwt.types'
 
 export default function NavLinks() {
   const pathname = usePathname()
+  const role = useAppStore((state) => state.role)
+
+  const visibleItems = menuItems.filter(
+    (item) => !item.roles || item.roles.includes(role as RoleType)
+  )
 
   return (
     <TooltipProvider>
@@ -21,7 +28,7 @@ export default function NavLinks() {
             <span className='sr-only'>Acme Inc</span>
           </Link>
 
-          {menuItems.map((Item, index) => {
+          {visibleItems.map((Item, index) => {
             const isActive = pathname === Item.href
             return (
               <Tooltip key={index}>

@@ -175,7 +175,7 @@ function AlertDialogDeleteIngredient({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa nguyên liệu?</AlertDialogTitle>
           <AlertDialogDescription>
-            Nguyên liệu <span className='bg-foreground text-primary-foreground rounded px-1'>{ingredientDelete?.name}</span> sẽ bị xóa vĩnh viễn khỏi kho hàng.
+            Nguyên liệu <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-semibold'>{ingredientDelete?.name}</span> sẽ bị xóa vĩnh viễn khỏi kho hàng.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -247,7 +247,8 @@ export default function IngredientTable() {
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageIndex])
 
   return (
     <IngredientTableContext.Provider value={{ ingredientIdEdit, setIngredientIdEdit, ingredientDelete, setIngredientDelete }}>

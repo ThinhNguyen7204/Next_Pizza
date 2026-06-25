@@ -6,9 +6,16 @@ import { cn } from '@/lib/utils'
 import { Package2, PanelLeft } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAppStore } from '@/components/app-provider'
+import { RoleType } from '@/types/jwt.types'
 
 export default function MobileNavLinks() {
   const pathname = usePathname()
+  const role = useAppStore((state) => state.role)
+
+  const visibleItems = menuItems.filter(
+    (item) => !item.roles || item.roles.includes(role as RoleType)
+  )
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -26,7 +33,7 @@ export default function MobileNavLinks() {
             <Package2 className='h-5 w-5 transition-all group-hover:scale-110' />
             <span className='sr-only'>Acme Inc</span>
           </Link>
-          {menuItems.map((Item, index) => {
+          {visibleItems.map((Item, index) => {
             const isActive = pathname === Item.href
             return (
               <Link

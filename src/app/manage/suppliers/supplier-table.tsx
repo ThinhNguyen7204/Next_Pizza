@@ -177,7 +177,7 @@ function AlertDialogDeleteSupplier({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa nhà cung cấp?</AlertDialogTitle>
           <AlertDialogDescription>
-            Nhà cung cấp <span className='bg-foreground text-primary-foreground rounded px-1'>{supplierDelete?.supplier_name}</span> sẽ bị xóa vĩnh viễn khỏi danh sách.
+            Nhà cung cấp <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-semibold'>{supplierDelete?.supplier_name}</span> sẽ bị xóa vĩnh viễn khỏi danh sách.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -249,7 +249,8 @@ export default function SupplierTable() {
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageIndex])
 
   return (
     <SupplierTableContext.Provider value={{ supplierIdEdit, setSupplierIdEdit, supplierDelete, setSupplierDelete }}>

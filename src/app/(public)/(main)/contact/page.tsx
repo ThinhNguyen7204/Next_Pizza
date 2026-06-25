@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/store'
 import { toast } from 'sonner'
+import { useCreateSupportMutation, useGetMySupports } from '@/queries/useSupport'
 import {
   Send,
   MessageCircle,
@@ -34,6 +35,7 @@ interface SupportMessage {
   category: string
   message: string
   date: string
+  createdAt?: string
   status: 'Pending' | 'Processing' | 'Resolved'
   replies?: SupportReply[]
 }
@@ -94,9 +96,11 @@ function SubmitForm({ userEmail, userName }: { userEmail?: string; userName?: st
     category: CATEGORIES[0],
     message: '',
   })
-  const [loading, setLoading] = useState(false)
+  const createSupportMutation = useCreateSupportMutation()
   const [submitted, setSubmitted] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
+
+  const loading = createSupportMutation.isPending
 
   useEffect(() => {
     setForm(prev => ({
@@ -116,27 +120,19 @@ function SubmitForm({ userEmail, userName }: { userEmail?: string; userName?: st
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc.')
       return
     }
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-
-    const newTicket: SupportMessage = {
-      id: generateId(),
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone: form.phone.trim(),
-      category: form.category,
-      message: form.message.trim(),
-      date: new Date().toISOString(),
-      status: 'Pending',
-      replies: [],
+    try {
+      await createSupportMutation.mutateAsync({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        category: form.category,
+        message: form.message.trim(),
+      })
+      setSubmitted(true)
+      toast.success('Yêu cầu hỗ trợ đã được gửi thành công!')
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi gửi yêu cầu hỗ trợ.')
     }
-
-    const existing = loadSupports()
-    saveSupports([newTicket, ...existing])
-
-    setLoading(false)
-    setSubmitted(true)
-    toast.success('Yêu cầu hỗ trợ đã được gửi thành công!')
   }
 
   const handleReset = () => {
@@ -315,22 +311,23 @@ function SubmitForm({ userEmail, userName }: { userEmail?: string; userName?: st
 // ─── Tab: My Tickets ──────────────────────────────────────────────────────────
 function MyTickets({ userEmail }: { userEmail?: string }) {
   const [email, setEmail] = useState(userEmail || '')
+  const [searchEmail, setSearchEmail] = useState(userEmail || '')
   const [searched, setSearched] = useState(!!userEmail)
-  const [tickets, setTickets] = useState<SupportMessage[]>([])
   const [selected, setSelected] = useState<SupportMessage | null>(null)
+
+  const { data: mySupportsRes } = useGetMySupports(searchEmail, searched)
+  const tickets = (mySupportsRes?.payload?.data || []) as SupportMessage[]
 
   const doSearch = () => {
     if (!email.trim()) { toast.error('Vui lòng nhập email của bạn.'); return }
-    const all = loadSupports()
-    const mine = all.filter(t => t.email.toLowerCase() === email.toLowerCase().trim())
-    setTickets(mine)
+    setSearchEmail(email.trim())
     setSearched(true)
   }
 
   useEffect(() => {
     if (userEmail) {
-      const all = loadSupports()
-      setTickets(all.filter(t => t.email.toLowerCase() === userEmail.toLowerCase()))
+      setEmail(userEmail)
+      setSearchEmail(userEmail)
       setSearched(true)
     }
   }, [userEmail])
@@ -409,7 +406,7 @@ function MyTickets({ userEmail }: { userEmail?: string }) {
                             {ticket.message}
                           </p>
                           <p className="text-[11px] text-charcoal/40 dark:text-cream/40">
-                            {new Date(ticket.date).toLocaleString('vi-VN')}
+                            {new Date(ticket.createdAt || ticket.date).toLocaleString('vi-VN')}
                           </p>
                           {(ticket.replies?.length ?? 0) > 0 && (
                             <p className="text-[11px] text-primary font-medium">
@@ -479,7 +476,7 @@ function MyTickets({ userEmail }: { userEmail?: string }) {
                       </span>
                     )
                   })()}
-                  <span className="text-xs text-charcoal/40 dark:text-cream/40">{new Date(selected.date).toLocaleString('vi-VN')}</span>
+                  <span className="text-xs text-charcoal/40 dark:text-cream/40">{new Date(selected.createdAt || selected.date).toLocaleString('vi-VN')}</span>
                 </div>
 
                 {/* Category */}
@@ -499,7 +496,7 @@ function MyTickets({ userEmail }: { userEmail?: string }) {
                         {selected.message}
                       </div>
                       <span className="text-[10px] text-charcoal/40 dark:text-cream/40 ml-1">
-                        Bạn — {new Date(selected.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        Bạn — {new Date(selected.createdAt || selected.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
 

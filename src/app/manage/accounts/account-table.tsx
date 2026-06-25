@@ -174,7 +174,7 @@ function AlertDialogDeleteAccount({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa nhân viên?</AlertDialogTitle>
           <AlertDialogDescription>
-            Tài khoản nhân viên <span className='bg-foreground text-primary-foreground rounded px-1'>{accountDelete?.username}</span> sẽ bị xóa
+            Tài khoản nhân viên <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-semibold'>{accountDelete?.username}</span> sẽ bị xóa
             vĩnh viễn.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -247,7 +247,8 @@ export default function AccountTable() {
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageIndex])
 
   return (
     <AccountTableContext.Provider value={{ accountIdEdit, setAccountIdEdit, accountDelete, setAccountDelete }}>

@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAddProductMutation } from "@/queries/useProduct"
 import { useUploadMediaMutation } from "@/queries/useMedia"
+import { useGetMenuList } from "@/queries/useMenu"
 import { toast } from "sonner"
 import { handleErrorApi } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -33,10 +34,16 @@ import { ProductStatus } from "@/constants/type"
 export default function AddProducts() {
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  
+
   const addProductMutation = useAddProductMutation()
   const uploadMediaMutation = useUploadMediaMutation()
   const imageInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Lấy danh sách menu từ API
+  const { data: menuListRes } = useGetMenuList()
+  const menuList = menuListRes?.payload?.data || []
+
+  const isPending = addProductMutation.isPending || uploadMediaMutation.isPending
 
   const form = useForm<CreateProductBodyType>({
     resolver: zodResolver(CreateProductBody) as any,
@@ -46,7 +53,7 @@ export default function AddProducts() {
       description: '',
       image: undefined,
       size: 'M',
-      menu_name: 'pizza',
+      menu_name: '',
       status: ProductStatus.Available
     },
     mode: "onChange",
@@ -56,10 +63,8 @@ export default function AddProducts() {
   const productName = form.watch('product_name')
 
   const previewImageFromFile = useMemo(() => {
-    if (file) {
-      return URL.createObjectURL(file)
-    }
-    return image || ''
+    if (file) return URL.createObjectURL(file)
+    return image || null
   }, [file, image])
 
   const reset = () => {
@@ -68,7 +73,8 @@ export default function AddProducts() {
   }
 
   const onSubmit = async (values: CreateProductBodyType) => {
-    if (addProductMutation.isPending) return
+    // Guard: chặn double submit
+    if (isPending) return
     try {
       let body = values
       if (file) {
@@ -76,20 +82,14 @@ export default function AddProducts() {
         formData.append('file', file)
         const uploadImageResult = await uploadMediaMutation.mutateAsync(formData)
         const imageUrl = uploadImageResult.payload.data
-        body = {
-          ...values,
-          image: imageUrl
-        }
+        body = { ...values, image: imageUrl }
       }
       const result = await addProductMutation.mutateAsync(body)
       toast.success(result.payload.message || 'Thêm món ăn thành công!')
       reset()
       setOpen(false)
     } catch (error) {
-      handleErrorApi({
-        error,
-        setError: form.setError
-      })
+      handleErrorApi({ error, setError: form.setError })
     }
   }
 
@@ -115,11 +115,14 @@ export default function AddProducts() {
           </DialogHeader>
 
           <FieldGroup>
-            {/* Image upload field */}
+            {/* Image upload */}
             <div className="flex gap-4 items-center justify-start py-2">
               <Avatar className="w-20 h-20 rounded border border-charcoal/10 object-cover">
-                <AvatarImage src={previewImageFromFile} />
-                <AvatarFallback className="rounded-none">{productName ? productName.slice(0, 2).toUpperCase() : 'IMG'}</AvatarFallback>
+                {/* Fix: chỉ render AvatarImage khi có src thực */}
+                {previewImageFromFile && <AvatarImage src={previewImageFromFile} />}
+                <AvatarFallback className="rounded-none">
+                  {productName ? productName.slice(0, 2).toUpperCase() : 'IMG'}
+                </AvatarFallback>
               </Avatar>
               <input
                 type="file"
@@ -127,10 +130,10 @@ export default function AddProducts() {
                 ref={imageInputRef}
                 className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) {
-                    setFile(file)
-                    form.setValue('image', URL.createObjectURL(file))
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    setFile(f)
+                    form.setValue('image', URL.createObjectURL(f))
                   }
                 }}
               />
@@ -146,28 +149,20 @@ export default function AddProducts() {
               </Button>
             </div>
 
-            {/* Product Name field */}
+            {/* Tên món ăn */}
             <Controller
               name="product_name"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="product-name">Tên món ăn</FieldLabel>
-                  <Input
-                    {...field}
-                    id="product-name"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Ví dụ: Pizza Hải Sản"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  <Input {...field} id="product-name" placeholder="Ví dụ: Pizza Hải Sản" autoComplete="off" />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            {/* Price field */}
+            {/* Giá bán */}
             <Controller
               name="price"
               control={form.control}
@@ -178,59 +173,66 @@ export default function AddProducts() {
                     {...field}
                     id="product-price"
                     type="number"
-                    aria-invalid={fieldState.invalid}
                     placeholder="Ví dụ: 120000"
                     autoComplete="off"
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            {/* Size field */}
+            {/* Kích thước */}
             <Controller
               name="size"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="product-size">Kích thước (Size)</FieldLabel>
-                  <Input
-                    {...field}
-                    id="product-size"
-                    placeholder="Ví dụ: S, M, L hoặc 12 inches"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn kích thước" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="S">S — Nhỏ</SelectItem>
+                      <SelectItem value="M">M — Vừa</SelectItem>
+                      <SelectItem value="L">L — Lớn</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            {/* Menu Name field */}
+            {/* Danh mục — lấy từ API */}
             <Controller
               name="menu_name"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="product-menu">Danh mục (Menu)</FieldLabel>
-                  <Input
-                    {...field}
-                    id="product-menu"
-                    placeholder="Ví dụ: pizza, drink, dessert"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  <FieldLabel htmlFor="product-menu">Danh mục</FieldLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn danh mục" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {menuList.length > 0 ? (
+                        menuList.map((menu: any) => (
+                          <SelectItem key={menu._id} value={menu.menu_name}>
+                            {menu.menu_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="_none" disabled>Chưa có danh mục nào</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            {/* Status select field */}
+            {/* Trạng thái */}
             <Controller
               name="status"
               control={form.control}
@@ -239,7 +241,6 @@ export default function AddProducts() {
                   <FieldLabel htmlFor="product-status">Trạng thái</FieldLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent>
@@ -248,14 +249,12 @@ export default function AddProducts() {
                       <SelectItem value={ProductStatus.Hidden}>Ẩn</SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
 
-            {/* Description field */}
+            {/* Mô tả */}
             <Controller
               name="description"
               control={form.control}
@@ -268,9 +267,7 @@ export default function AddProducts() {
                     placeholder="Nhập mô tả chi tiết nguyên liệu, hương vị..."
                     autoComplete="off"
                   />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
@@ -280,8 +277,8 @@ export default function AddProducts() {
             <DialogClose asChild>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
             </DialogClose>
-            <Button type='submit' disabled={addProductMutation.isPending}>
-              {addProductMutation.isPending ? 'Đang thêm...' : 'Thêm mới'}
+            <Button type='submit' disabled={isPending}>
+              {isPending ? 'Đang thêm...' : 'Thêm mới'}
             </Button>
           </DialogFooter>
         </form>

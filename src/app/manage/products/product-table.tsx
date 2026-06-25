@@ -202,7 +202,7 @@ function AlertDialogDeleteProduct({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa món ăn?</AlertDialogTitle>
           <AlertDialogDescription>
-            Món <span className='bg-foreground text-primary-foreground rounded px-1'>{productDelete?.product_name}</span> sẽ bị xóa vĩnh viễn.
+            Món <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-semibold'>{productDelete?.product_name}</span> sẽ bị xóa vĩnh viễn.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -254,6 +254,7 @@ export default function ProductTable() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -270,11 +271,11 @@ export default function ProductTable() {
   })
 
   useEffect(() => {
-    table.setPagination({
+    setPagination({
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+  }, [pageIndex])
 
   return (
     <ProductTableContext.Provider value={{ productIdEdit, setProductIdEdit, productDelete, setProductDelete }}>

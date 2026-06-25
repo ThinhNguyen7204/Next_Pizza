@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { toast } from "sonner"
 import { Mail, Phone, Calendar, Clock, User, Send } from "lucide-react"
+import { useGetSupportDetail, useUpdateSupportMutation } from "@/queries/useSupport"
 
 export interface SupportMessage {
   id: string
@@ -22,6 +23,8 @@ export interface SupportMessage {
   phone: string
   message: string
   date: string
+  createdAt?: string
+  updatedAt?: string
   status: 'Pending' | 'Processing' | 'Resolved'
   replies?: {
     sender: 'Admin' | 'Customer'
@@ -33,32 +36,30 @@ export interface SupportMessage {
 interface Props {
   id: string | undefined
   setId: (value: string | undefined) => void
-  onUpdate: (updated: SupportMessage) => void
+  onUpdate?: (updated: SupportMessage) => void
 }
 
 export default function ViewSupport({ id, setId, onUpdate }: Props) {
-  const [message, setMessage] = useState<SupportMessage | null>(null)
   const [replyText, setReplyText] = useState('')
   const [status, setStatus] = useState<'Pending' | 'Processing' | 'Resolved'>('Pending')
 
+  const { data: supportDetailRes } = useGetSupportDetail(id as string, !!id)
+  const message = supportDetailRes?.payload?.data as SupportMessage | undefined
+  const updateSupportMutation = useUpdateSupportMutation()
+
   useEffect(() => {
-    if (id) {
-      const stored = localStorage.getItem('la_pizzaia_supports')
-      if (stored) {
-        const list = JSON.parse(stored) as SupportMessage[]
-        const found = list.find(item => item.id === id)
-        if (found) {
-          setMessage(found)
-          setStatus(found.status)
-        }
-      }
-    } else {
-      setMessage(null)
+    if (message) {
+      setStatus(message.status)
+    }
+  }, [message])
+
+  useEffect(() => {
+    if (!id) {
       setReplyText('')
     }
   }, [id])
 
-  const handleSendReply = () => {
+  const handleSendReply = async () => {
     if (!message || !replyText.trim()) return
 
     const newReply = {
@@ -67,31 +68,49 @@ export default function ViewSupport({ id, setId, onUpdate }: Props) {
       timestamp: new Date().toLocaleString('vi-VN')
     }
 
-    const updatedMessage: SupportMessage = {
-      ...message,
-      status: 'Resolved', // auto resolve upon reply
-      replies: [...(message.replies || []), newReply]
-    }
+    const updatedReplies = [...(message.replies || []), newReply]
 
-    setMessage(updatedMessage)
-    setStatus('Resolved')
-    setReplyText('')
-    onUpdate(updatedMessage)
-    toast.success('Gửi phản hồi cho khách hàng thành công!')
+    try {
+      await updateSupportMutation.mutateAsync({
+        id: message.id,
+        status: 'Resolved', // auto resolve upon reply
+        replies: updatedReplies
+      })
+      setReplyText('')
+      if (onUpdate) {
+        onUpdate({
+          ...message,
+          status: 'Resolved',
+          replies: updatedReplies
+        })
+      }
+      toast.success('Gửi phản hồi cho khách hàng thành công!')
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi gửi phản hồi.')
+    }
   }
 
-  const handleStatusChange = (val: 'Pending' | 'Processing' | 'Resolved') => {
+  const handleStatusChange = async (val: 'Pending' | 'Processing' | 'Resolved') => {
     if (!message) return
-    setStatus(val)
-    const updatedMessage: SupportMessage = {
-      ...message,
-      status: val
+    try {
+      await updateSupportMutation.mutateAsync({
+        id: message.id,
+        status: val,
+        replies: message.replies
+      })
+      setStatus(val)
+      if (onUpdate) {
+        onUpdate({
+          ...message,
+          status: val
+        })
+      }
+      toast.success(`Cập nhật trạng thái phản hồi: ${
+        val === 'Pending' ? 'Chờ xử lý' : val === 'Processing' ? 'Đang xử lý' : 'Đã phản hồi'
+      }`)
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi cập nhật trạng thái.')
     }
-    setMessage(updatedMessage)
-    onUpdate(updatedMessage)
-    toast.success(`Cập nhật trạng thái phản hồi: ${
-      val === 'Pending' ? 'Chờ xử lý' : val === 'Processing' ? 'Đang xử lý' : 'Đã phản hồi'
-    }`)
   }
 
   const reset = () => {
@@ -117,7 +136,7 @@ export default function ViewSupport({ id, setId, onUpdate }: Props) {
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-primary shrink-0" />
-                <span>{message.phone}</span>
+                <span>{message.phone || 'N/A'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-primary shrink-0" />
@@ -125,7 +144,7 @@ export default function ViewSupport({ id, setId, onUpdate }: Props) {
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-primary shrink-0" />
-                <span>{new Date(message.date).toLocaleString('vi-VN')}</span>
+                <span>{new Date(message.createdAt || message.date).toLocaleString('vi-VN')}</span>
               </div>
             </div>
 
@@ -138,7 +157,9 @@ export default function ViewSupport({ id, setId, onUpdate }: Props) {
                   <div className="bg-muted text-foreground p-3 rounded-2xl rounded-tl-none text-sm">
                     {message.message}
                   </div>
-                  <span className="text-[10px] text-muted-foreground ml-1">Khách hàng - {new Date(message.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    Khách hàng - {new Date(message.createdAt || message.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
 
                 {/* Replies */}
@@ -176,7 +197,7 @@ export default function ViewSupport({ id, setId, onUpdate }: Props) {
                 />
                 <Button 
                   onClick={handleSendReply} 
-                  disabled={!replyText.trim()}
+                  disabled={!replyText.trim() || updateSupportMutation.isPending}
                   className="shrink-0 h-10 w-10 p-0 flex items-center justify-center rounded-xl"
                 >
                   <Send className="w-4 h-4" />
@@ -190,6 +211,7 @@ export default function ViewSupport({ id, setId, onUpdate }: Props) {
                 <FieldLabel className="font-semibold text-sm">Trạng thái phiếu hỗ trợ</FieldLabel>
                 <Select 
                   value={status} 
+                  disabled={updateSupportMutation.isPending}
                   onValueChange={(val: 'Pending' | 'Processing' | 'Resolved') => handleStatusChange(val)}
                 >
                   <SelectTrigger className="w-full">

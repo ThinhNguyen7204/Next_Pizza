@@ -34,11 +34,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import AutoPagination from '@/components/auto-pagination'
-import { useEffect, useState, createContext, useContext } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useState, createContext, useContext, useMemo } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { DataTableColumnHeader } from '@/components/data-table-column-header'
 import { DataTableViewOptions } from '@/components/data-table-view-options'
 import ViewSupport, { SupportMessage } from '@/app/manage/supports/view-support'
+import { useGetSupportList, useUpdateSupportMutation } from '@/queries/useSupport'
 import { toast } from 'sonner'
 
 const SupportTableContext = createContext<{
@@ -50,71 +51,6 @@ const SupportTableContext = createContext<{
   supportIdEdit: undefined,
   handleDelete: (id: string) => { }
 })
-
-const initialMockSupports: SupportMessage[] = [
-  {
-    id: "SUP_101",
-    name: "Khánh Minh",
-    email: "customer@order.com",
-    phone: "0901122334",
-    message: "Tôi đặt pizza Pepperoni nhưng shipper giao nhầm sang Margherita. Mong nhà hàng kiểm tra và đổi lại giúp tôi.",
-    date: new Date(Date.now() - 3600000 * 2).toISOString(),
-    status: 'Pending',
-    replies: []
-  },
-  {
-    id: "SUP_102",
-    name: "Nguyễn Văn Nam",
-    email: "customer2@order.com",
-    phone: "0987654321",
-    message: "Chất lượng bánh rất ngon, vỏ bánh giòn xốp đúng chuẩn lò nướng củi Ý. Tuy nhiên xốt cà chua hơi chua quá một chút.",
-    date: new Date(Date.now() - 3600000 * 18).toISOString(),
-    status: 'Processing',
-    replies: [
-      {
-        sender: 'Admin',
-        content: 'Chào anh Nam, cảm ơn đóng góp ý kiến của anh về xốt bánh. Nhà hàng sẽ lưu ý điều chỉnh độ chua cân bằng hơn ạ.',
-        timestamp: new Date(Date.now() - 3600000 * 17).toLocaleString('vi-VN')
-      }
-    ]
-  },
-  {
-    id: "SUP_103",
-    name: "Trần Thị Thuỳ",
-    email: "customer3@order.com",
-    phone: "0912345678",
-    message: "Chào nhà hàng, tôi muốn đặt bàn tiệc sinh nhật cho 15 người vào thứ 7 tuần này lúc 19h00. Nhà hàng có set menu hay chương trình ưu đãi gì không?",
-    date: new Date(Date.now() - 3600000 * 36).toISOString(),
-    status: 'Resolved',
-    replies: [
-      {
-        sender: 'Admin',
-        content: 'Chào chị Thuỳ, nhà hàng đã liên hệ qua số điện thoại để tư vấn set menu tiệc nhóm và giữ bàn cho chị rồi nhé.',
-        timestamp: new Date(Date.now() - 3600000 * 34).toLocaleString('vi-VN')
-      }
-    ]
-  },
-  {
-    id: "SUP_104",
-    name: "Lê Hoàng Long",
-    email: "longle@gmail.com",
-    phone: "0933445566",
-    message: "Tính năng tích điểm đổi voucher của tiệm dùng rất hay. Hi vọng trong tương lai tiệm ra mắt thêm nhiều loại pizza nhân nhồi mới.",
-    date: new Date(Date.now() - 3600000 * 48).toISOString(),
-    status: 'Resolved',
-    replies: []
-  },
-  {
-    id: "SUP_105",
-    name: "Phạm Minh Trang",
-    email: "trangpham@yahoo.com",
-    phone: "0955667788",
-    message: "Hôm qua mình đặt hàng giao về hơi chậm 15 phút, bánh nguội một xíu. Mong lần sau quán giao hàng đúng hẹn hơn.",
-    date: new Date(Date.now() - 3600000 * 72).toISOString(),
-    status: 'Pending',
-    replies: []
-  }
-]
 
 export const columns: ColumnDef<SupportMessage>[] = [
   {
@@ -164,7 +100,7 @@ export const columns: ColumnDef<SupportMessage>[] = [
   {
     accessorKey: 'date',
     header: 'Thời gian',
-    cell: ({ row }) => <span>{new Date(row.original.date).toLocaleString('vi-VN')}</span>
+    cell: ({ row }) => <span>{new Date(row.original.createdAt || row.original.date).toLocaleString('vi-VN')}</span>
   },
   {
     accessorKey: 'status',
@@ -182,7 +118,7 @@ export const columns: ColumnDef<SupportMessage>[] = [
       }
 
       return (
-        <Select onValueChange={handleStatusChange} value={currentStatus}>
+        <Select modal={false} onValueChange={handleStatusChange} value={currentStatus}>
           <SelectTrigger className={`w-[130px] text-xs h-8 font-semibold rounded-full border ${
             currentStatus === 'Pending' ? 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/30 dark:border-yellow-900/50 dark:text-yellow-400' :
             currentStatus === 'Processing' ? 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400' :
@@ -190,7 +126,7 @@ export const columns: ColumnDef<SupportMessage>[] = [
           }`}>
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
-          <SelectContent className="text-xs">
+          <SelectContent className="text-xs" position="popper">
             <SelectItem value="Pending">Chờ xử lý</SelectItem>
             <SelectItem value="Processing">Đang xử lý</SelectItem>
             <SelectItem value="Resolved">Đã phản hồi</SelectItem>
@@ -203,7 +139,7 @@ export const columns: ColumnDef<SupportMessage>[] = [
     id: 'actions',
     enableHiding: false,
     cell: function Actions({ row }) {
-      const { setSupportIdEdit, handleDelete } = useContext(SupportTableContext)
+      const { setSupportIdEdit } = useContext(SupportTableContext)
       const openDetail = () => {
         setSupportIdEdit(row.original.id)
       }
@@ -220,7 +156,6 @@ export const columns: ColumnDef<SupportMessage>[] = [
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={openDetail}>Xem & Trả lời</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDelete(row.original.id)} className="text-destructive focus:bg-destructive/10">Xóa</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -230,54 +165,55 @@ export const columns: ColumnDef<SupportMessage>[] = [
 
 const PAGE_SIZE = 10
 export default function SupportTable() {
+  const router = useRouter()
   const searchParam = useSearchParams()
   const page = searchParam.get('page') ? Number(searchParam.get('page')) : 1
   const pageIndex = page - 1
   const [supportIdEdit, setSupportIdEdit] = useState<string | undefined>()
   
-  const [data, setData] = useState<SupportMessage[]>([])
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Load from localStorage or populate defaults
-  useEffect(() => {
-    const stored = localStorage.getItem('la_pizzaia_supports')
-    if (stored) {
-      setData(JSON.parse(stored))
-    } else {
-      localStorage.setItem('la_pizzaia_supports', JSON.stringify(initialMockSupports))
-      setData(initialMockSupports)
-    }
-  }, [])
+  const { data: supportListRes } = useGetSupportList()
+  const data = supportListRes?.payload?.data || []
+  const updateSupportMutation = useUpdateSupportMutation()
 
-  const handleUpdate = (updated: SupportMessage) => {
-    setData((prev) => {
-      const index = prev.findIndex(item => item.id === updated.id)
-      if (index === -1) return prev
-      const next = [...prev]
-      next[index] = updated
-      localStorage.setItem('la_pizzaia_supports', JSON.stringify(next))
-      return next
-    })
+  const handleUpdate = async (updated: SupportMessage) => {
+    try {
+      await updateSupportMutation.mutateAsync({
+        id: updated.id,
+        status: updated.status,
+        replies: updated.replies
+      })
+      toast.success('Cập nhật trạng thái thành công!')
+    } catch (error) {
+      toast.error('Cập nhật trạng thái thất bại!')
+    }
   }
 
   const handleDelete = (id: string) => {
-    setData((prev) => {
-      const next = prev.filter(item => item.id !== id)
-      localStorage.setItem('la_pizzaia_supports', JSON.stringify(next))
-      return next
-    })
-    toast.success('Xoá phiếu hỗ trợ thành công!')
+    toast.info('Tính năng xoá góp ý chưa được hỗ trợ trên hệ thống.')
   }
 
+  // Reset page to 1 when search query or status filter changes
+  useEffect(() => {
+    if (page !== 1) {
+      const params = new URLSearchParams(searchParam.toString())
+      params.set('page', '1')
+      router.replace(`/manage/supports?${params.toString()}`)
+    }
+  }, [searchQuery, statusFilter])
+
   // Filter & Search Logic
-  const filteredData = data.filter(item => {
-    const matchesStatus = statusFilter === 'All' || item.status === statusFilter
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          item.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.email.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesStatus && matchesSearch
-  })
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const matchesStatus = statusFilter === 'All' || item.status === statusFilter
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            item.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            item.email.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesStatus && matchesSearch
+    })
+  }, [data, statusFilter, searchQuery])
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -293,12 +229,14 @@ export default function SupportTable() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,
@@ -309,11 +247,11 @@ export default function SupportTable() {
   })
 
   useEffect(() => {
-    table.setPagination({
+    setPagination({
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+  }, [pageIndex])
 
   return (
     <SupportTableContext.Provider value={{ supportIdEdit, setSupportIdEdit, handleDelete, handleUpdate } as any}>
@@ -331,11 +269,11 @@ export default function SupportTable() {
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Trạng thái:</span>
-            <Select onValueChange={setStatusFilter} value={statusFilter}>
+            <Select modal={false} onValueChange={setStatusFilter} value={statusFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Lọc trạng thái" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 <SelectItem value="All">Tất cả</SelectItem>
                 <SelectItem value="Pending">Chờ xử lý</SelectItem>
                 <SelectItem value="Processing">Đang xử lý</SelectItem>

@@ -199,7 +199,7 @@ function AlertDialogDeletePromote({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa ưu đãi?</AlertDialogTitle>
           <AlertDialogDescription>
-            Chương trình ưu đãi <span className='bg-foreground text-primary-foreground rounded px-1'>{promoteDelete?.name}</span> sẽ bị xóa vĩnh viễn khỏi hệ thống.
+            Chương trình ưu đãi <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-semibold'>{promoteDelete?.name}</span> sẽ bị xóa vĩnh viễn khỏi hệ thống.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -251,6 +251,7 @@ export default function PromoteTable() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -267,11 +268,11 @@ export default function PromoteTable() {
   })
 
   useEffect(() => {
-    table.setPagination({
+    setPagination({
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+  }, [pageIndex])
 
   return (
     <PromoteTableContext.Provider value={{ promoteIdEdit, setPromoteIdEdit, promoteDelete, setPromoteDelete }}>

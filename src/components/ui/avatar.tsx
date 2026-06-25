@@ -27,6 +27,7 @@ function Avatar({
 
 function AvatarImage({
   className,
+  src,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
   return (
@@ -36,6 +37,7 @@ function AvatarImage({
         "rounded-full aspect-square size-full object-cover",
         className
       )}
+      src={src === "" ? undefined : src}
       {...props}
     />
   )

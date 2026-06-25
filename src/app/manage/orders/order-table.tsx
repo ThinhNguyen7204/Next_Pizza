@@ -96,9 +96,11 @@ export const columns: ColumnDef<OrderItem>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: '_id',
-    header: 'ID',
-    cell: ({ row }) => <span className="font-mono text-xs">{row.original._id}</span>
+    accessorKey: 'customer_name',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Khách hàng" />
+    ),
+    cell: ({ row }) => <span className="font-medium text-foreground">{row.original.customer_name || 'Khách hàng'}</span>
   },
   {
     accessorKey: 'order_date',
@@ -111,9 +113,8 @@ export const columns: ColumnDef<OrderItem>[] = [
     accessorKey: 'delivery_type',
     header: 'Hình thức',
     cell: ({ row }) => (
-      <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-        row.original.delivery_type === 'Delivery' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
-      }`}>
+      <span className={`px-2 py-0.5 text-xs font-semibold rounded ${row.original.delivery_type === 'Delivery' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+        }`}>
         {row.original.delivery_type === 'Delivery' ? 'Giao tận nơi' : 'Nhận tại tiệm'}
       </span>
     )
@@ -152,18 +153,17 @@ export const columns: ColumnDef<OrderItem>[] = [
       }
 
       return (
-        <Select onValueChange={handleStatusChange} value={currentStatus} disabled={updateOrderMutation.isPending}>
-          <SelectTrigger className={`w-[140px] text-xs h-8 font-semibold rounded-full border ${
-            currentStatus === OrderStatus.Pending ? 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/30 dark:border-yellow-900/50 dark:text-yellow-400' :
-            currentStatus === OrderStatus.Processing ? 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400' :
-            currentStatus === OrderStatus.Shipping ? 'bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/30 dark:border-indigo-900/50 dark:text-indigo-400' :
-            currentStatus === OrderStatus.Delivered ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-400' :
-            currentStatus === OrderStatus.Paid ? 'bg-green-100 border-green-200 text-green-800 dark:bg-green-950/40 dark:border-green-900/50 dark:text-green-400 font-bold' :
-            'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400'
-          }`}>
+        <Select modal={false} onValueChange={handleStatusChange} value={currentStatus} disabled={updateOrderMutation.isPending}>
+          <SelectTrigger className={`w-[140px] text-xs h-8 font-semibold rounded-full border ${currentStatus === OrderStatus.Pending ? 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/30 dark:border-yellow-900/50 dark:text-yellow-400' :
+              currentStatus === OrderStatus.Processing ? 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400' :
+                currentStatus === OrderStatus.Shipping ? 'bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/30 dark:border-indigo-900/50 dark:text-indigo-400' :
+                  currentStatus === OrderStatus.Delivered ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-400' :
+                    currentStatus === OrderStatus.Paid ? 'bg-green-100 border-green-200 text-green-800 dark:bg-green-950/40 dark:border-green-900/50 dark:text-green-400 font-bold' :
+                      'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400'
+            }`}>
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
-          <SelectContent className="text-xs">
+          <SelectContent className="text-xs" position="popper">
             <SelectItem value={OrderStatus.Pending}>Chờ xử lý</SelectItem>
             <SelectItem value={OrderStatus.Processing}>Đang chế biến</SelectItem>
             <SelectItem value={OrderStatus.Shipping}>Đang giao</SelectItem>
@@ -234,7 +234,7 @@ function AlertDialogDeleteOrder({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa đơn hàng?</AlertDialogTitle>
           <AlertDialogDescription>
-            Đơn hàng mã <span className='bg-foreground text-primary-foreground rounded px-1 font-mono text-xs'>{orderDelete?._id}</span> sẽ bị xóa vĩnh viễn.
+            Đơn hàng mã <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs font-semibold'>{orderDelete?._id}</span> sẽ bị xóa vĩnh viễn.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -253,16 +253,14 @@ export default function OrderTable() {
   const pageIndex = page - 1
   const [orderIdEdit, setOrderIdEdit] = useState<string | undefined>()
   const [orderDelete, setOrderDelete] = useState<OrderItem | null>(null)
-  
+
   const [statusFilter, setStatusFilter] = useState<string>('All')
-  const [customerIdFilter, setCustomerIdFilter] = useState<string>('')
 
   const queryParams = useMemo(() => {
     const params: any = {}
     if (statusFilter !== 'All') params.status = statusFilter
-    if (customerIdFilter.trim()) params.customer_id = customerIdFilter.trim()
     return params
-  }, [statusFilter, customerIdFilter])
+  }, [statusFilter])
 
   const { data: orderListRes, isLoading } = useGetOrderList(queryParams)
   const data = orderListRes?.payload?.data || []
@@ -330,6 +328,7 @@ export default function OrderTable() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -346,11 +345,11 @@ export default function OrderTable() {
   })
 
   useEffect(() => {
-    table.setPagination({
+    setPagination({
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+  }, [pageIndex])
 
   return (
     <OrderTableContext.Provider value={{ orderIdEdit, setOrderIdEdit, orderDelete, setOrderDelete }}>
@@ -366,22 +365,22 @@ export default function OrderTable() {
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className='flex flex-wrap items-center gap-4 py-4 border-b border-charcoal/10 mb-4'>
-          {/* Customer ID Filter */}
+          {/* Tìm kiếm khách hàng */}
           <Input
-            placeholder='Lọc ID Khách hàng'
-            value={customerIdFilter}
-            onChange={(e) => setCustomerIdFilter(e.target.value)}
+            placeholder='Tìm kiếm khách hàng...'
+            value={(table.getColumn('customer_name')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('customer_name')?.setFilterValue(event.target.value)}
             className='max-w-xs'
           />
 
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Trạng thái:</span>
-            <Select onValueChange={setStatusFilter} value={statusFilter}>
+            <Select modal={false} onValueChange={setStatusFilter} value={statusFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Lọc trạng thái" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 <SelectItem value="All">Tất cả</SelectItem>
                 <SelectItem value={OrderStatus.Pending}>Chờ xử lý</SelectItem>
                 <SelectItem value={OrderStatus.Processing}>Đang chế biến</SelectItem>

@@ -229,7 +229,7 @@ function AlertDialogDeleteVoucher({
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa voucher?</AlertDialogTitle>
           <AlertDialogDescription>
-            Voucher <span className='bg-foreground text-primary-foreground rounded px-1'>{voucherDelete?.code}</span> sẽ bị xóa vĩnh viễn khỏi hệ thống.
+            Voucher <span className='bg-primary/10 text-primary rounded px-1.5 py-0.5 font-semibold'>{voucherDelete?.code}</span> sẽ bị xóa vĩnh viễn khỏi hệ thống.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -281,6 +281,7 @@ export default function VoucherTable() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -297,11 +298,11 @@ export default function VoucherTable() {
   })
 
   useEffect(() => {
-    table.setPagination({
+    setPagination({
       pageIndex,
       pageSize: PAGE_SIZE
     })
-  }, [table, pageIndex])
+  }, [pageIndex])
 
   return (
     <VoucherTableContext.Provider value={{ voucherIdEdit, setVoucherIdEdit, voucherDelete, setVoucherDelete }}>

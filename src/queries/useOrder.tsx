@@ -4,12 +4,13 @@ import {
   UpdateOrderBodyType,
   OrderQueryType
 } from '@/schemaValidations/order.schema'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 
 export const useGetOrderList = (queryParams?: OrderQueryType) => {
   return useQuery({
     queryKey: ['orders', queryParams],
-    queryFn: () => orderApiRequest.list(queryParams)
+    queryFn: () => orderApiRequest.list(queryParams),
+    placeholderData: keepPreviousData
   })
 }
 
