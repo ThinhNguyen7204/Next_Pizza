@@ -75,6 +75,12 @@ export default function Footer() {
                 <ArrowUpRight className='w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity' />
               </Link>
             </li>
+            <li>
+              <Link href='/contact' className='hover:text-primary hover:pl-2 transition-all duration-300 flex items-center gap-1 group'>
+                <span>Liên hệ & Hỗ trợ</span>
+                <ArrowUpRight className='w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity' />
+              </Link>
+            </li>
           </ul>
         </div>
 
